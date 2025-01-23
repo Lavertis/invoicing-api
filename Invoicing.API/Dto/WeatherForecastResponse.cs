@@ -1,6 +1,6 @@
-namespace Invoicing;
+namespace Invoicing.API.Dto;
 
-public class WeatherForecast
+public class WeatherForecastResponse
 {
     public DateOnly Date { get; set; }
 

@@ -1,14 +1,22 @@
+using Invoicing.API.CQRS;
+using Invoicing.API.Mapping;
+using Invoicing.API.Middleware;
+using Invoicing.API.Validation;
+using Invoicing.Infrastructure.Database;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddDatabaseModule(builder.Configuration);
+builder.Services.AddMiddlewareModule();
+builder.Services.AddAutoMapperModule();
+builder.Services.AddFluentValidators();
+builder.Services.AddMediatorModule();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -16,9 +24,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
