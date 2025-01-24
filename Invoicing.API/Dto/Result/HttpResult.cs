@@ -15,7 +15,7 @@ public class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
         return this;
     }
 
-    public HttpResult<TValue> WithValidationErrors(List<ValidationFailure> validationFailures)
+    public HttpResult<TValue> WithValidationErrors(IEnumerable<ValidationFailure> validationFailures)
     {
         ValidationErrors = validationFailures
             .GroupBy(x => x.PropertyName, s => s.ErrorMessage)

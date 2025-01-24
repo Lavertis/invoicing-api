@@ -7,12 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Invoicing.Domain\Invoicing.Domain.csproj"/>
     </ItemGroup>
 
 </Project>

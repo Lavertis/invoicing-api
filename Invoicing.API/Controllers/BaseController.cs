@@ -1,5 +1,4 @@
 ﻿using Invoicing.API.Dto.Result;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Invoicing.API.Controllers;
@@ -7,10 +6,8 @@ namespace Invoicing.API.Controllers;
 [ApiController]
 [Produces("application/json")]
 [Consumes("application/json")]
-public abstract class BaseController(IMediator mediator) : ControllerBase
+public abstract class BaseController : ControllerBase
 {
-    protected readonly IMediator Mediator = mediator;
-
     protected ActionResult<TValue> CreateResponse<TValue>(HttpResult<TValue> result)
     {
         if (result.Pagination != null)
@@ -29,7 +26,7 @@ public abstract class BaseController(IMediator mediator) : ControllerBase
         {
             204 => StatusCode(result.StatusCode),
             >= 200 and < 300 => StatusCode(result.StatusCode, result.Value),
-            _ when result.IsError => StatusCode(result.StatusCode, new { Error = result.Error?.Message }),
+            _ when result.IsError => StatusCode(result.StatusCode, new ErrorResult(result.Error)),
             _ when result.HasValidationErrors =>
                 StatusCode(result.StatusCode, new { Errors = result.ValidationErrors }),
             _ => throw new Exception("Failed to create response")

@@ -1,15 +1,14 @@
-using Invoicing.API.CQRS;
 using Invoicing.API.Mapping;
+using Invoicing.API.Mediator;
 using Invoicing.API.Middleware;
 using Invoicing.API.Validation;
 using Invoicing.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddDatabaseModule(builder.Configuration);
+builder.Services.AddDatabaseModule();
 builder.Services.AddMiddlewareModule();
 builder.Services.AddAutoMapperModule();
 builder.Services.AddFluentValidators();
