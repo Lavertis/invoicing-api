@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddDatabaseModule();
+builder.Services.AddDatabaseModule(builder.Configuration);
 builder.Services.AddMiddlewareModule();
 builder.Services.AddAutoMapperModule();
 builder.Services.AddFluentValidators();

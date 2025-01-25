@@ -10,4 +10,5 @@ public class InvoicingDbContext : DbContext
     }
 
     public DbSet<Operation> Operations { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
 }

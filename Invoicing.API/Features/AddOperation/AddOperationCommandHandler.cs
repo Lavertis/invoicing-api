@@ -1,3 +1,4 @@
+using FluentValidation;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.Domain.Entities;
@@ -6,17 +7,25 @@ using Invoicing.Infrastructure.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Invoicing.API.CQRS.Commands.AddOperation;
+namespace Invoicing.API.Features.AddOperation;
 
-public class AddOperationCommandHandler(InvoicingDbContext context)
+public class AddOperationCommandHandler(InvoicingDbContext context, IValidator<AddOperationCommand> validator)
     : IRequestHandler<AddOperationCommand, HttpResult<IdResponse<Guid>>>
 {
     public async Task<HttpResult<IdResponse<Guid>>> Handle(AddOperationCommand request,
         CancellationToken cancellationToken)
     {
         var result = new HttpResult<IdResponse<Guid>>();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+            return result.WithValidationErrors(validationResult.Errors);
 
-        var isOperationValidResult = await IsOperationValidAsync(request, cancellationToken);
+        var lastOperation = await context.Operations
+            .Where(o => o.ClientId == request.ClientId && o.ServiceId == request.ServiceId)
+            .OrderByDescending(o => o.Date)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var isOperationValidResult = IsOperationValid(request, lastOperation);
         if (!isOperationValidResult.Value)
         {
             return result
@@ -24,13 +33,16 @@ public class AddOperationCommandHandler(InvoicingDbContext context)
                 .WithError(isOperationValidResult.Error);
         }
 
+        var pricePerDay = request.Type == OperationType.StartService
+            ? request.PricePerDay!.Value
+            : lastOperation!.PricePerDay;
         var operation = new Operation
         {
             Id = Guid.NewGuid(),
             ServiceId = request.ServiceId,
             ClientId = request.ClientId,
             Quantity = request.Quantity,
-            PricePerDay = request.PricePerDay,
+            PricePerDay = pricePerDay,
             Date = request.Date,
             Type = request.Type
         };
@@ -41,14 +53,8 @@ public class AddOperationCommandHandler(InvoicingDbContext context)
         return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
     }
 
-    private async Task<CommonResult<bool>> IsOperationValidAsync(AddOperationCommand request,
-        CancellationToken cancellationToken)
+    private CommonResult<bool> IsOperationValid(AddOperationCommand request, Operation? lastOperation)
     {
-        var lastOperation = await context.Operations
-            .Where(o => o.ClientId == request.ClientId && o.ServiceId == request.ServiceId)
-            .OrderByDescending(o => o.Date)
-            .FirstOrDefaultAsync(cancellationToken);
-
         if (lastOperation is not null && lastOperation.Date >= request.Date)
         {
             return new CommonResult<bool>()
