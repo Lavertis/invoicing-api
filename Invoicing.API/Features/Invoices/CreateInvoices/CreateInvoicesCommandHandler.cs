@@ -6,19 +6,19 @@ using Invoicing.Infrastructure.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Invoicing.API.Features.CalculateInvoices;
+namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public class CalculateInvoicesCommandHandler(InvoicingDbContext context, IValidator<CalculateInvoicesCommand> validator)
-    : IRequestHandler<CalculateInvoicesCommand, HttpResult<CalculateInvoicesResponse>>
+public class CreateInvoicesCommandHandler(InvoicingDbContext context, IValidator<CreateInvoicesCommand> validator)
+    : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
     private readonly List<SuccessfulInvoice> _successfulInvoices = [];
 
-    public async Task<HttpResult<CalculateInvoicesResponse>> Handle(
-        CalculateInvoicesCommand request,
+    public async Task<HttpResult<CreateInvoicesResponse>> Handle(
+        CreateInvoicesCommand request,
         CancellationToken cancellationToken)
     {
-        var result = new HttpResult<CalculateInvoicesResponse>();
+        var result = new HttpResult<CreateInvoicesResponse>();
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
@@ -35,7 +35,7 @@ public class CalculateInvoicesCommandHandler(InvoicingDbContext context, IValida
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        var response = new CalculateInvoicesResponse
+        var response = new CreateInvoicesResponse
         {
             SuccessfulInvoices = _successfulInvoices,
             FailedInvoices = _failedInvoices

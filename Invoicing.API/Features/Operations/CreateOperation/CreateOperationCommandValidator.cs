@@ -1,11 +1,11 @@
 using FluentValidation;
 using Invoicing.Domain.Enums;
 
-namespace Invoicing.API.Features.AddOperation;
+namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public class AddOperationCommandValidator : AbstractValidator<AddOperationCommand>
+public class CreateOperationCommandValidator : AbstractValidator<CreateOperationCommand>
 {
-    public AddOperationCommandValidator()
+    public CreateOperationCommandValidator()
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 

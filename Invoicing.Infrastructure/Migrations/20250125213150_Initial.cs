@@ -36,7 +36,7 @@ namespace Invoicing.Infrastructure.Migrations
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
                     PricePerDay = table.Column<decimal>(type: "TEXT", nullable: false),
                     Date = table.Column<DateOnly>(type: "TEXT", nullable: false),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false)
+                    Type = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

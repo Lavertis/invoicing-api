@@ -3,9 +3,9 @@ using Invoicing.API.Dto.Result;
 using Invoicing.Domain.Enums;
 using MediatR;
 
-namespace Invoicing.API.Features.AddOperation;
+namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public class AddOperationCommand : IRequest<HttpResult<IdResponse<Guid>>>
+public class CreateOperationCommand : IRequest<HttpResult<IdResponse<Guid>>>
 {
     public required string ServiceId { get; init; }
     public required string ClientId { get; init; }

@@ -1,6 +1,6 @@
-namespace Invoicing.API.Features.CalculateInvoices;
+namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public class CalculateInvoicesResponse
+public class CreateInvoicesResponse
 {
     public ICollection<SuccessfulInvoice> SuccessfulInvoices { get; set; } = [];
     public ICollection<FailedInvoice> FailedInvoices { get; set; } = [];

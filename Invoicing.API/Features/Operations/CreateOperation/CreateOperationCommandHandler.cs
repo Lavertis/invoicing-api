@@ -7,12 +7,12 @@ using Invoicing.Infrastructure.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Invoicing.API.Features.AddOperation;
+namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public class AddOperationCommandHandler(InvoicingDbContext context, IValidator<AddOperationCommand> validator)
-    : IRequestHandler<AddOperationCommand, HttpResult<IdResponse<Guid>>>
+public class CreateOperationCommandHandler(InvoicingDbContext context, IValidator<CreateOperationCommand> validator)
+    : IRequestHandler<CreateOperationCommand, HttpResult<IdResponse<Guid>>>
 {
-    public async Task<HttpResult<IdResponse<Guid>>> Handle(AddOperationCommand request,
+    public async Task<HttpResult<IdResponse<Guid>>> Handle(CreateOperationCommand request,
         CancellationToken cancellationToken)
     {
         var result = new HttpResult<IdResponse<Guid>>();
@@ -50,7 +50,7 @@ public class AddOperationCommandHandler(InvoicingDbContext context, IValidator<A
         return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
     }
 
-    private CommonResult<bool> IsOperationValid(AddOperationCommand request, Operation? lastOperation)
+    private CommonResult<bool> IsOperationValid(CreateOperationCommand request, Operation? lastOperation)
     {
         if (lastOperation is not null && lastOperation.Date >= request.Date)
         {
