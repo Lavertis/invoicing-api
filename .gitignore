@@ -43,4 +43,4 @@ msbuild.err
 msbuild.wrn
 
 # Custom
-*.db*
+*.sqlite*

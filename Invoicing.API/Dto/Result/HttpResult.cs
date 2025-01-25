@@ -2,7 +2,7 @@
 
 namespace Invoicing.API.Dto.Result;
 
-public class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
+public sealed class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
 {
     public IDictionary<string, string[]>? ValidationErrors { get; private set; }
     public int StatusCode { get; private set; } = StatusCodes.Status200OK;

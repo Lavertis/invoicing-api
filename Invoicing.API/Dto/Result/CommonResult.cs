@@ -1,5 +1,3 @@
 ﻿namespace Invoicing.API.Dto.Result;
 
-public class CommonResult<TValue> : Result<CommonResult<TValue>, TValue>
-{
-}
+public sealed class CommonResult<TValue> : Result<CommonResult<TValue>, TValue>;

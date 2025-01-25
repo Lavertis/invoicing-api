@@ -1,19 +1,9 @@
 namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public class CreateInvoicesResponse
-{
-    public ICollection<SuccessfulInvoice> SuccessfulInvoices { get; set; } = [];
-    public ICollection<FailedInvoice> FailedInvoices { get; set; } = [];
-}
+public record CreateInvoicesResponse(
+    ICollection<SuccessfulInvoice> SuccessfulInvoices,
+    ICollection<FailedInvoice> FailedInvoices);
 
-public class SuccessfulInvoice
-{
-    public required Guid InvoiceId { get; set; }
-    public required string ClientId { get; set; }
-}
+public record SuccessfulInvoice(Guid InvoiceId, string ClientId);
 
-public class FailedInvoice
-{
-    public required string ClientId { get; set; }
-    public required string Reason { get; set; }
-}
+public record FailedInvoice(string ClientId, string Reason);

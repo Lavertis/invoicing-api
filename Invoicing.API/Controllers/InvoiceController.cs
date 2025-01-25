@@ -6,7 +6,7 @@ namespace Invoicing.API.Controllers;
 
 [ApiController]
 [Route("api/invoices")]
-public class InvoiceController(IMediator mediator) : BaseController
+public sealed class InvoiceController(IMediator mediator) : BaseController
 {
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

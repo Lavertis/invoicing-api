@@ -9,7 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public class CreateOperationCommandHandler(InvoicingDbContext context, IValidator<CreateOperationCommand> validator)
+public sealed class CreateOperationCommandHandler(
+    InvoicingDbContext context,
+    IValidator<CreateOperationCommand> validator)
     : IRequestHandler<CreateOperationCommand, HttpResult<IdResponse<Guid>>>
 {
     public async Task<HttpResult<IdResponse<Guid>>> Handle(CreateOperationCommand request,

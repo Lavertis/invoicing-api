@@ -3,7 +3,7 @@ using Invoicing.Domain.Enums;
 
 namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public class CreateOperationCommandValidator : AbstractValidator<CreateOperationCommand>
+public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOperationCommand>
 {
     public CreateOperationCommandValidator()
     {

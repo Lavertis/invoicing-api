@@ -1,3 +1,3 @@
 ﻿namespace Invoicing.API.Dto.Result;
 
-public record ErrorResult(string? Error);
+public sealed record ErrorResult(string? Error);

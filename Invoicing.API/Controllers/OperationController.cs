@@ -7,7 +7,7 @@ namespace Invoicing.API.Controllers;
 
 [ApiController]
 [Route("api/operations")]
-public class OperationController(IMediator mediator) : BaseController
+public sealed class OperationController(IMediator mediator) : BaseController
 {
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]

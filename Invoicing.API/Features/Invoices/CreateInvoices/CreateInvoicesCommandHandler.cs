@@ -8,7 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public class CreateInvoicesCommandHandler(InvoicingDbContext context, IValidator<CreateInvoicesCommand> validator)
+public sealed class CreateInvoicesCommandHandler(
+    InvoicingDbContext context,
+    IValidator<CreateInvoicesCommand> validator)
     : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
@@ -35,11 +37,7 @@ public class CreateInvoicesCommandHandler(InvoicingDbContext context, IValidator
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        var response = new CreateInvoicesResponse
-        {
-            SuccessfulInvoices = _successfulInvoices,
-            FailedInvoices = _failedInvoices
-        };
+        var response = new CreateInvoicesResponse(_successfulInvoices, _failedInvoices);
         return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
     }
 
@@ -182,8 +180,8 @@ public class CreateInvoicesCommandHandler(InvoicingDbContext context, IValidator
     }
 
     private void LogFailedInvoice(string clientId, string reason)
-        => _failedInvoices.Add(new FailedInvoice { ClientId = clientId, Reason = reason });
+        => _failedInvoices.Add(new FailedInvoice(clientId, reason));
 
     private void LogSuccessfulInvoice(Guid invoiceId, string clientId)
-        => _successfulInvoices.Add(new SuccessfulInvoice { InvoiceId = invoiceId, ClientId = clientId });
+        => _successfulInvoices.Add(new SuccessfulInvoice(invoiceId, clientId));
 }
