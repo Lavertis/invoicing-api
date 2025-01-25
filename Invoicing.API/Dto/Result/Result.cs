@@ -2,10 +2,10 @@
 
 public abstract class Result<TResult, TValue> where TResult : Result<TResult, TValue>
 {
-    public string? Error { get; private set; }
+    public string? ErrorMessage { get; private set; }
     public TValue? Value { get; private set; }
 
-    public bool IsError => Error != null;
+    public bool IsError { get; private set; }
 
     public TResult WithValue(TValue value)
     {
@@ -13,9 +13,10 @@ public abstract class Result<TResult, TValue> where TResult : Result<TResult, TV
         return (TResult)this;
     }
 
-    public TResult WithError(string? error)
+    public TResult WithError(string? errorMessage)
     {
-        Error = error;
+        ErrorMessage = errorMessage;
+        IsError = true;
         return (TResult)this;
     }
 }

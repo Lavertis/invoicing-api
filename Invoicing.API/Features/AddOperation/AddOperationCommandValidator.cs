@@ -13,6 +13,16 @@ public class AddOperationCommandValidator : AbstractValidator<AddOperationComman
             .GreaterThanOrEqualTo(1)
             .LessThanOrEqualTo(100_000);
 
+        RuleFor(x => x.Quantity)
+            .NotNull()
+            .When(x => x.Type == OperationType.StartService)
+            .WithMessage("Quantity must not be null for starting the service.");
+
+        RuleFor(x => x.Quantity)
+            .Null()
+            .When(x => x.Type != OperationType.StartService)
+            .WithMessage("Quantity must be null for operations other than starting the service.");
+
         RuleFor(x => x.PricePerDay)
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(10_000)

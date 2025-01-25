@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Invoicing.Infrastructure.Migrations
 {
     [DbContext(typeof(InvoicingDbContext))]
-    [Migration("20250125155050_Initial")]
+    [Migration("20250125203457_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -32,6 +32,12 @@ namespace Invoicing.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

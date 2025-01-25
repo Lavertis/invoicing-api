@@ -26,7 +26,7 @@ public abstract class BaseController : ControllerBase
         {
             204 => StatusCode(result.StatusCode),
             >= 200 and < 300 => StatusCode(result.StatusCode, result.Value),
-            _ when result.IsError => StatusCode(result.StatusCode, new ErrorResult(result.Error)),
+            _ when result.IsError => StatusCode(result.StatusCode, new ErrorResult(result.ErrorMessage)),
             _ when result.HasValidationErrors =>
                 StatusCode(result.StatusCode, new { Errors = result.ValidationErrors }),
             _ => throw new Exception("Failed to create response")

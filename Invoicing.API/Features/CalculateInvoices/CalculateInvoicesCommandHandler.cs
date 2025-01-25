@@ -11,6 +11,9 @@ namespace Invoicing.API.Features.CalculateInvoices;
 public class CalculateInvoicesCommandHandler(InvoicingDbContext context, IValidator<CalculateInvoicesCommand> validator)
     : IRequestHandler<CalculateInvoicesCommand, HttpResult<CalculateInvoicesResponse>>
 {
+    private readonly List<FailedInvoice> _failedInvoices = [];
+    private readonly List<SuccessfulInvoice> _successfulInvoices = [];
+
     public async Task<HttpResult<CalculateInvoicesResponse>> Handle(
         CalculateInvoicesCommand request,
         CancellationToken cancellationToken)
@@ -20,93 +23,167 @@ public class CalculateInvoicesCommandHandler(InvoicingDbContext context, IValida
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
 
-        var operations = await context.Operations
-            .Where(o => o.Date.Year == request.Year && o.Date.Month == request.Month)
-            .OrderBy(o => o.ClientId).ThenBy(o => o.ServiceId).ThenBy(o => o.Date)
-            .ToListAsync(cancellationToken);
-
-        var groupedOperations = operations.GroupBy(o => o.ClientId);
-        var response = new CalculateInvoicesResponse();
-
-        foreach (var clientGroup in groupedOperations)
+        var operations = await GetOperations(request.Year, request.Month);
+        foreach (var clientGroup in operations.GroupBy(o => o.ClientId))
         {
             var clientId = clientGroup.Key;
-            var existingInvoice = await context.Invoices // TODO: this is not valid
-                .Where(i => i.ClientId == clientId)
-                .Where(i => i.CreatedAt.Year == request.Year && i.CreatedAt.Month == request.Month)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (existingInvoice != null)
-            {
-                response.FailedInvoices.Add(new FailedInvoice
-                {
-                    ClientId = clientId,
-                    Reason = "An invoice already exists for this client in the specified month."
-                });
-                continue;
-            }
-
-            foreach (var serviceGroup in clientGroup.GroupBy(o => o.ServiceId))
-            {
-                var lastOperation = serviceGroup.LastOrDefault();
-                if (lastOperation is not { Type: OperationType.EndService })
-                {
-                    var failedInvoice = new FailedInvoice
-                    {
-                        ClientId = clientId,
-                        Reason = "The last operation for this service is not an end service."
-                    };
-                    response.FailedInvoices.Add(failedInvoice);
-                    continue;
-                }
-
-                var invoice = new Invoice
-                {
-                    Id = Guid.NewGuid(),
-                    ClientId = clientId,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                InvoiceItem? currentItem = null;
-
-                foreach (var operation in serviceGroup)
-                {
-                    if (operation.Type is OperationType.StartService or OperationType.ResumeService)
-                    {
-                        currentItem = new InvoiceItem
-                        {
-                            ServiceId = operation.ServiceId,
-                            StartDate = operation.Date,
-                            IsSuspended = false
-                        };
-                    }
-                    else if (operation.Type is OperationType.SuspendService or OperationType.EndService &&
-                             currentItem != null)
-                    {
-                        currentItem.EndDate = operation.Date;
-                        currentItem.Value = CalculateValue(currentItem, operation);
-                        currentItem.IsSuspended = operation.Type == OperationType.SuspendService;
-                        invoice.Items.Add(currentItem);
-                        currentItem = null;
-                    }
-                }
-
-                if (invoice.Items.Count != 0)
-                {
-                    context.Invoices.Add(invoice);
-                    var successfulInvoice = new SuccessfulInvoice { InvoiceId = invoice.Id, ClientId = clientId };
-                    response.SuccessfulInvoices.Add(successfulInvoice);
-                }
-            }
+            var isClientAlreadyInvoiced = await IsClientAlreadyInvoicedAsync(
+                clientId, request.Year, request.Month, clientGroup, cancellationToken
+            );
+            if (isClientAlreadyInvoiced) continue;
+            ProcessClient(clientGroup);
         }
 
         await context.SaveChangesAsync(cancellationToken);
+        var response = new CalculateInvoicesResponse
+        {
+            SuccessfulInvoices = _successfulInvoices,
+            FailedInvoices = _failedInvoices
+        };
         return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
     }
 
-    private decimal CalculateValue(InvoiceItem item, Operation operation)
+    private async Task<IEnumerable<Operation>> GetOperations(int year, int month)
     {
-        var days = (item.EndDate.ToDateTime(TimeOnly.MinValue) - item.StartDate.ToDateTime(TimeOnly.MinValue)).Days;
+        return await context.Operations
+            .Where(o => o.Date.Year == year && o.Date.Month == month)
+            .OrderBy(o => o.ServiceId).ThenBy(o => o.Date)
+            .ToListAsync();
+    }
+
+    private async Task<bool> IsClientAlreadyInvoicedAsync(
+        string clientId,
+        int year,
+        int month,
+        IGrouping<string, Operation> clientGroup,
+        CancellationToken cancellationToken)
+    {
+        var existingInvoice = await context.Invoices
+            .Include(i => i.Items)
+            .Where(i => i.ClientId == clientId)
+            .Where(i => i.CreatedAt.Year == year && i.CreatedAt.Month == month)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingInvoice == null) return false;
+
+        var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientGroup, existingInvoice);
+        if (!areAllOperationsInvoiced)
+        {
+            LogFailedInvoice(
+                clientId,
+                "Client has operations that are not invoiced, but an invoice already exists."
+            );
+        }
+
+        return true;
+    }
+
+    private bool AreAllOperationsInvoiced(IEnumerable<Operation> operations, Invoice invoice)
+    {
+        return operations
+            .All(operation => invoice.Items
+                .Any(item =>
+                    item.ServiceId == operation.ServiceId &&
+                    item.StartDate <= operation.Date &&
+                    item.EndDate >= operation.Date
+                )
+            );
+    }
+
+    private void ProcessClient(IGrouping<string, Operation> clientGroup)
+    {
+        var clientId = clientGroup.Key;
+        var firstOperation = clientGroup.First();
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(),
+            ClientId = clientId,
+            CreatedAt = DateTime.UtcNow,
+            Year = firstOperation.Date.Year,
+            Month = firstOperation.Date.Month
+        };
+        foreach (var serviceGroup in clientGroup.GroupBy(o => o.ServiceId))
+        {
+            var processServiceGroupResult = ProcessService(invoice, serviceGroup, clientId);
+            if (processServiceGroupResult.IsError) return;
+        }
+
+        AddInvoiceIfNotEmpty(invoice, clientId);
+    }
+
+    private CommonResult<Unit> ProcessService(
+        Invoice invoice,
+        IGrouping<string, Operation> serviceGroup, // TODO: probably change to List<Operation> but check what it contains
+        string clientId)
+    {
+        var result = new CommonResult<Unit>();
+        var isLastOperationValid = IsLastOperationValid(serviceGroup.LastOrDefault(), clientId);
+        if (!isLastOperationValid)
+            return result.WithError("The last operation for this service is not an end service.");
+
+        InvoiceItem? currentItem = null;
+        // TODO: and then below use Linq instead of foreach
+        foreach (var operation in serviceGroup)
+        {
+            ProcessOperation(operation, invoice, ref currentItem);
+        }
+
+        return result;
+    }
+
+    private bool IsLastOperationValid(Operation? lastOperation, string clientId)
+    {
+        if (lastOperation == null || lastOperation.Type == OperationType.EndService)
+            return true;
+
+        LogFailedInvoice(
+            clientId,
+            $"The last operation for {lastOperation.ServiceId} service is not {OperationType.EndService}."
+        );
+        return false;
+    }
+
+    private void ProcessOperation(Operation operation, Invoice invoice, ref InvoiceItem? currentItem)
+    {
+        if (operation.Type is OperationType.StartService or OperationType.ResumeService)
+        {
+            currentItem = new InvoiceItem
+            {
+                ServiceId = operation.ServiceId,
+                StartDate = operation.Date,
+                IsSuspended = false
+            };
+        }
+        else if (operation.Type is OperationType.SuspendService or OperationType.EndService && currentItem != null)
+        {
+            currentItem.EndDate = operation.Date;
+            currentItem.Value = CalculateInvoiceItemValue(currentItem, operation);
+            currentItem.IsSuspended = operation.Type == OperationType.SuspendService;
+            invoice.Items.Add(currentItem);
+            currentItem = null;
+        }
+    }
+
+    private decimal CalculateInvoiceItemValue(InvoiceItem item, Operation operation)
+    {
+        var startDate = item.StartDate.ToDateTime(TimeOnly.MinValue);
+        var endDate = item.EndDate.ToDateTime(TimeOnly.MinValue);
+        var days = (endDate - startDate).Days;
         return operation.PricePerDay * operation.Quantity * days;
     }
+
+    private void AddInvoiceIfNotEmpty(Invoice invoice, string clientId)
+    {
+        if (invoice.Items.Count == 0)
+            return;
+
+        context.Invoices.Add(invoice);
+        LogSuccessfulInvoice(invoice.Id, clientId);
+    }
+
+    private void LogFailedInvoice(string clientId, string reason)
+        => _failedInvoices.Add(new FailedInvoice { ClientId = clientId, Reason = reason });
+
+    private void LogSuccessfulInvoice(Guid invoiceId, string clientId)
+        => _successfulInvoices.Add(new SuccessfulInvoice { InvoiceId = invoiceId, ClientId = clientId });
 }

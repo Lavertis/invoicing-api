@@ -30,19 +30,16 @@ public class AddOperationCommandHandler(InvoicingDbContext context, IValidator<A
         {
             return result
                 .WithStatusCode(StatusCodes.Status400BadRequest)
-                .WithError(isOperationValidResult.Error);
+                .WithError(isOperationValidResult.ErrorMessage);
         }
 
-        var pricePerDay = request.Type == OperationType.StartService
-            ? request.PricePerDay!.Value
-            : lastOperation!.PricePerDay;
         var operation = new Operation
         {
             Id = Guid.NewGuid(),
             ServiceId = request.ServiceId,
             ClientId = request.ClientId,
-            Quantity = request.Quantity,
-            PricePerDay = pricePerDay,
+            Quantity = request.Quantity ?? lastOperation!.Quantity,
+            PricePerDay = request.PricePerDay ?? lastOperation!.PricePerDay,
             Date = request.Date,
             Type = request.Type
         };

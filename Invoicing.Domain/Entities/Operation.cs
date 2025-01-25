@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Invoicing.Domain.Entities;
 
 [Index(nameof(ClientId), nameof(ServiceId), nameof(Date), IsDescending = [false, false, true])]
-public class Operation // TODO: A lot of information is redundant
+public class Operation
 {
     public Guid Id { get; set; }
     public required string ServiceId { get; set; }
