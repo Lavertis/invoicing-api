@@ -13,10 +13,10 @@ namespace Invoicing.Tests.Invoices.GetInvoices
         }
 
         [Theory]
-        [InlineData(0, 2021, false)]
-        [InlineData(13, 2021, false)]
-        [InlineData(5, 1999, false)]
-        [InlineData(5, 2021, true)]
+        [InlineData(5, 2021, true)] // Valid data
+        [InlineData(0, 2021, false)] // Invalid month (less than 1)
+        [InlineData(13, 2021, false)] // Invalid month (greater than 12)
+        [InlineData(5, 1999, false)] // Invalid year (less than 2000)
         public void Validate_GetInvoicesQuery_ShouldValidateCorrectly(int month, int year, bool expectedIsValid)
         {
             // Arrange

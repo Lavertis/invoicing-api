@@ -24,9 +24,9 @@ public class BaseTest : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        Dispose(true);
+        await DisposeAsyncCore();
+        Dispose(false);
         GC.SuppressFinalize(this);
-        await Context.DisposeAsync();
     }
 
     public void Dispose()
@@ -35,16 +35,24 @@ public class BaseTest : IDisposable, IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected virtual async ValueTask DisposeAsyncCore()
     {
         if (!_disposed)
         {
-            if (disposing)
-            {
-                Context.Dispose();
-            }
-
+            await Context.DisposeAsync();
             _disposed = true;
         }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing) Context.Dispose();
+        _disposed = true;
+    }
+
+    ~BaseTest()
+    {
+        Dispose(false);
     }
 }
