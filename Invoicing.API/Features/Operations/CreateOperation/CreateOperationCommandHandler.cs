@@ -67,7 +67,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
         };
     }
 
-    private CommonResult<bool> IsOperationValid(
+    private static CommonResult<bool> IsOperationValid(
         CreateOperationCommand request,
         ServiceProvisionOperation? lastOperation)
     {
@@ -81,7 +81,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
         return IsOperationTypeValid(request.Type, lastOperation?.Type);
     }
 
-    private CommonResult<bool> IsOperationTypeValid(OperationType newOperation, OperationType? lastOperation)
+    private static CommonResult<bool> IsOperationTypeValid(OperationType newOperation, OperationType? lastOperation)
     {
         var result = new CommonResult<bool>();
 
@@ -97,7 +97,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
         return result;
     }
 
-    private CommonResult<bool> ValidateStartService(OperationType? lastOperation, CommonResult<bool> result)
+    private static CommonResult<bool> ValidateStartService(OperationType? lastOperation, CommonResult<bool> result)
     {
         return lastOperation is null or OperationType.EndService
             ? result.WithValue(true)
@@ -106,7 +106,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
                 .WithError("Cannot start service because the last operation is not an end service.");
     }
 
-    private CommonResult<bool> ValidateSuspendService(OperationType? lastOperation, CommonResult<bool> result)
+    private static CommonResult<bool> ValidateSuspendService(OperationType? lastOperation, CommonResult<bool> result)
     {
         return lastOperation is OperationType.StartService or OperationType.ResumeService
             ? result.WithValue(true)
@@ -115,7 +115,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
                 .WithError("Cannot suspend service because the last operation is not a start or resume service.");
     }
 
-    private CommonResult<bool> ValidateResumeService(OperationType? lastOperation, CommonResult<bool> result)
+    private static CommonResult<bool> ValidateResumeService(OperationType? lastOperation, CommonResult<bool> result)
     {
         return lastOperation == OperationType.SuspendService
             ? result.WithValue(true)
@@ -124,7 +124,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
                 .WithError("Cannot resume service because the last operation is not a suspend service.");
     }
 
-    private CommonResult<bool> ValidateEndService(OperationType? lastOperation, CommonResult<bool> result)
+    private static CommonResult<bool> ValidateEndService(OperationType? lastOperation, CommonResult<bool> result)
     {
         return lastOperation is OperationType.StartService or OperationType.ResumeService
             ? result.WithValue(true)

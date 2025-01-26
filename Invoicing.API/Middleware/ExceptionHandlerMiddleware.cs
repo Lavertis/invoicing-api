@@ -13,7 +13,7 @@ public sealed class ExceptionHandlerMiddleware(ILogger<ExceptionHandlerMiddlewar
             var response = context.Response;
             response.ContentType = "application/json";
             response.StatusCode = StatusCodes.Status500InternalServerError;
-            logger.LogError(exception, "{p0}", exception.Message);
+            logger.LogError(exception, "{P0}", exception.Message);
             await response.WriteAsJsonAsync(new { Message = "Internal server error" });
         }
     }

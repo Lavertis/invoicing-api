@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Invoicing.Infrastructure.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,7 @@ public static class DatabaseModule
     {
         var connectionString = configuration.GetConnectionString("InvoicingDB");
         if (connectionString == null)
-            throw new Exception("Cannot get InvoicingDB connection string");
+            throw new ConfigurationException("Cannot get InvoicingDB connection string");
         return connectionString;
     }
 }

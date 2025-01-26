@@ -2,7 +2,7 @@ using FluentValidation;
 using Invoicing.API.Dto.Result;
 using MediatR;
 
-namespace Invoicing.API.Mediator;
+namespace Invoicing.API.Mediator.Behaviors;
 
 public sealed class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull

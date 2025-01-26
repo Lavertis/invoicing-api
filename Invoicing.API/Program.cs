@@ -1,7 +1,7 @@
+using Invoicing.API.Extensions;
 using Invoicing.API.Mapping;
 using Invoicing.API.Mediator;
 using Invoicing.API.Middleware;
-using Invoicing.API.Validation;
 using Invoicing.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,12 +18,11 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Invoicing API"));
+    app.UseSwaggerDocumentation();
 }
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-app.Run();
+await app.RunAsync();

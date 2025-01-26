@@ -1,9 +1,9 @@
 using System.Reflection;
 using FluentValidation;
 
-namespace Invoicing.API.Validation;
+namespace Invoicing.API.Extensions;
 
-public static class FluentValidationModule
+public static class FluentValidationExtensions
 {
     public static void AddFluentValidators(this IServiceCollection services)
     {

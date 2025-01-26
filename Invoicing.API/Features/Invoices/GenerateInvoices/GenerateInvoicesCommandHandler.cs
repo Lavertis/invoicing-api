@@ -60,7 +60,7 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
             .ToListAsync();
     }
 
-    private CommonResult<bool> VerifyAllOperationsAreInvoiced(
+    private static CommonResult<bool> VerifyAllOperationsAreInvoiced(
         Invoice invoice,
         IList<ServiceProvisionOperation> clientOperations)
     {
@@ -73,7 +73,7 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
                 .WithError("Client has operations that are not invoiced, but an invoice already exists.");
     }
 
-    private bool AreAllOperationsInvoiced(IEnumerable<ServiceProvisionOperation> operations, Invoice invoice)
+    private static bool AreAllOperationsInvoiced(IEnumerable<ServiceProvisionOperation> operations, Invoice invoice)
     {
         return operations
             .All(operation => invoice.Items
@@ -107,7 +107,7 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
     private CommonResult<Invoice?> CreateInvoiceForClient(IList<ServiceProvisionOperation> operations)
     {
         var result = new CommonResult<Invoice?>();
-        var firstOperation = operations.First();
+        var firstOperation = operations[0];
         var clientId = firstOperation.ServiceProvision.ClientId;
         var invoice = new Invoice
         {
@@ -159,7 +159,7 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
         return invoiceItem;
     }
 
-    private decimal CalculateInvoiceItemValue(
+    private static decimal CalculateInvoiceItemValue(
         ServiceProvisionOperation beginOperation,
         ServiceProvisionOperation endOperation)
     {

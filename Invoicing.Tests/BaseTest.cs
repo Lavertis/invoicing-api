@@ -9,6 +9,7 @@ public class BaseTest : IDisposable, IAsyncDisposable
 {
     protected readonly InvoicingDbContext Context;
     protected readonly IMapper Mapper;
+    private bool _disposed;
 
     protected BaseTest()
     {
@@ -23,13 +24,27 @@ public class BaseTest : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        Dispose(true);
         GC.SuppressFinalize(this);
         await Context.DisposeAsync();
     }
 
     public void Dispose()
     {
+        Dispose(true);
         GC.SuppressFinalize(this);
-        Context.Dispose();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                Context.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 }

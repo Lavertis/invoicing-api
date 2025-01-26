@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Invoicing.API.Mediator.Behaviors;
 
 namespace Invoicing.API.Mediator;
 

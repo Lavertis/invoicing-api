@@ -1,8 +1,7 @@
 using AutoMapper;
-using Invoicing.API.Features.Invoices.Shared;
 using Invoicing.Domain.Entities;
 
-namespace Invoicing.API.Mapping.Profiles
+namespace Invoicing.API.Features.Invoices.Shared
 {
     public sealed class InvoiceMappingProfile : Profile
     {
