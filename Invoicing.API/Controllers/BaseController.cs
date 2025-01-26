@@ -10,26 +10,20 @@ public abstract class BaseController : ControllerBase
 {
     protected ActionResult<TValue> CreateResponse<TValue>(HttpResult<TValue> result)
     {
-        if (result.Pagination != null)
+        if (result.StatusCode == 204)
+            return StatusCode(result.StatusCode);
+        if (result.StatusCode is >= 200 and < 300)
+            return StatusCode(result.StatusCode, result.Value);
+        if (result.HasValidationErrors)
+            return StatusCode(result.StatusCode, new { Errors = result.ValidationErrors });
+        if (result.StatusCode is >= 400 and <= 600)
         {
-            Response.Headers.Append(
-                "X-Pagination",
-                $"page={result.Pagination.Page}," +
-                $"pageSize={result.Pagination.PageSize}," +
-                $"totalCount={result.Pagination.TotalCount}," +
-                $"totalPages={result.Pagination.TotalPages}"
+            return StatusCode(
+                result.StatusCode,
+                result.ErrorMessage != null ? new ErrorResult(result.ErrorMessage) : null
             );
-            Response.Headers.Append("Access-Control-Expose-Headers", "X-Pagination");
         }
 
-        return result.StatusCode switch
-        {
-            204 => StatusCode(result.StatusCode),
-            >= 200 and < 300 => StatusCode(result.StatusCode, result.Value),
-            _ when result.IsError => StatusCode(result.StatusCode, new ErrorResult(result.ErrorMessage)),
-            _ when result.HasValidationErrors =>
-                StatusCode(result.StatusCode, new { Errors = result.ValidationErrors }),
-            _ => throw new Exception("Failed to create response")
-        };
+        throw new Exception("Failed to create response");
     }
 }

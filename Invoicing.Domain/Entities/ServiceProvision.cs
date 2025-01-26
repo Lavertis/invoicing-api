@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Invoicing.Domain.Entities;
 
 [Index(nameof(ServiceId), nameof(ClientId))]
-public class ServiceProvision : BaseEntity
+public sealed class ServiceProvision : BaseEntity
 {
     public required string ServiceId { get; set; }
     public required string ClientId { get; set; }

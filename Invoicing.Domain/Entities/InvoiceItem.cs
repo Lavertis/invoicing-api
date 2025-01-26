@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Invoicing.Domain.Entities;
 
-public class InvoiceItem : BaseEntity
+public sealed class InvoiceItem : BaseEntity
 {
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }

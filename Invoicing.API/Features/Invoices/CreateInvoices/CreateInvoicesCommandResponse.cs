@@ -1,8 +1,9 @@
 namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public record CreateInvoicesResponse(
+public record CreateInvoicesCommandResponse(
     ICollection<SuccessfulInvoice> SuccessfulInvoices,
-    ICollection<FailedInvoice> FailedInvoices);
+    ICollection<FailedInvoice> FailedInvoices
+);
 
 public record SuccessfulInvoice(Guid InvoiceId, string ClientId);
 

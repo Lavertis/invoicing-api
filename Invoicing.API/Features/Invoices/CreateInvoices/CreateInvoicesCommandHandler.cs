@@ -11,16 +11,16 @@ namespace Invoicing.API.Features.Invoices.CreateInvoices;
 public sealed class CreateInvoicesCommandHandler(
     InvoicingDbContext context,
     IValidator<CreateInvoicesCommand> validator
-) : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesResponse>>
+) : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesCommandResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
     private readonly List<SuccessfulInvoice> _successfulInvoices = [];
 
-    public async Task<HttpResult<CreateInvoicesResponse>> Handle(
+    public async Task<HttpResult<CreateInvoicesCommandResponse>> Handle(
         CreateInvoicesCommand request,
         CancellationToken cancellationToken)
     {
-        var result = new HttpResult<CreateInvoicesResponse>();
+        var result = new HttpResult<CreateInvoicesCommandResponse>();
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
@@ -49,7 +49,7 @@ public sealed class CreateInvoicesCommandHandler(
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        var response = new CreateInvoicesResponse(_successfulInvoices, _failedInvoices);
+        var response = new CreateInvoicesCommandResponse(_successfulInvoices, _failedInvoices);
         return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
     }
 
