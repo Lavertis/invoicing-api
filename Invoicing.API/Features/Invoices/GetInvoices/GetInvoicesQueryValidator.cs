@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Invoicing.API.Features.Invoices.GetInvoice;
+namespace Invoicing.API.Features.Invoices.GetInvoices;
 
-public sealed class GetInvoiceQueryValidator : AbstractValidator<GetInvoiceQuery>
+public sealed class GetInvoicesQueryValidator : AbstractValidator<GetInvoicesQuery>
 {
-    public GetInvoiceQueryValidator()
+    public GetInvoicesQueryValidator()
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 

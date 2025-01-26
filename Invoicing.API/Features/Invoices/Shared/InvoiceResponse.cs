@@ -6,12 +6,15 @@ public sealed record InvoiceResponse(
     int Year,
     int Month,
     ICollection<InvoiceItemResponse> Items
-);
+)
+{
+    public decimal TotalValue { get; } = Items.Sum(item => item.Value);
+}
 
 public sealed record InvoiceItemResponse(
     DateOnly StartDate,
     DateOnly EndDate,
-    int Value,
+    decimal Value,
     bool IsSuspended,
     string ServiceId
 );
