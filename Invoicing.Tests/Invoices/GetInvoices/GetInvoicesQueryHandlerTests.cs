@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Invoicing.API.Features.Invoices.GetInvoices;
 using Invoicing.Domain.Entities;
 
@@ -53,10 +54,10 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result.Value);
-        Assert.Single(result.Value.Records);
-        Assert.Equal(invoice.Id, result.Value.Records.First().Id);
-        Assert.Single(result.Value.Records.First().Items);
+        result.Value.Should().NotBeNull();
+        result.Value.Records.Should().ContainSingle();
+        result.Value.Records.First().Id.Should().Be(invoice.Id);
+        result.Value.Records.First().Items.Should().ContainSingle();
     }
 
     [Fact]
@@ -76,8 +77,8 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result.Value);
-        Assert.Empty(result.Value.Records);
+        result.Value.Should().NotBeNull();
+        result.Value.Records.Should().BeEmpty();
     }
 
     [Fact]
@@ -125,9 +126,9 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result.Value);
-        Assert.Equal(10, result.Value.Records.Count);
-        Assert.Equal(20, result.Value.TotalCount);
-        Assert.All(result.Value.Records, record => Assert.Single(record.Items));
+        result.Value.Should().NotBeNull();
+        result.Value.Records.Should().HaveCount(10);
+        result.Value.TotalCount.Should().Be(20);
+        result.Value.Records.Should().OnlyContain(record => record.Items.Count == 1);
     }
 }

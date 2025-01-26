@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Invoicing.API.Features.Invoices.GenerateInvoices;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
@@ -43,11 +44,11 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.NotNull(result.Value);
-        Assert.Single(result.Value.SuccessfulInvoices);
-        Assert.Empty(result.Value.FailedInvoices);
+        result.IsSuccess.Should().BeTrue();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Value.Should().NotBeNull();
+        result.Value.SuccessfulInvoices.Should().HaveCount(1);
+        result.Value.FailedInvoices.Should().BeEmpty();
     }
 
     [Fact]
@@ -76,11 +77,11 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.NotNull(result.Value);
-        Assert.Empty(result.Value.SuccessfulInvoices);
-        Assert.Single(result.Value.FailedInvoices);
+        result.IsSuccess.Should().BeTrue();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Value.Should().NotBeNull();
+        result.Value.SuccessfulInvoices.Should().BeEmpty();
+        result.Value.FailedInvoices.Should().HaveCount(1);
     }
 
     [Fact]
@@ -114,10 +115,10 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.NotNull(result.Value);
-        Assert.Empty(result.Value.SuccessfulInvoices);
-        Assert.Single(result.Value.FailedInvoices);
+        result.IsSuccess.Should().BeTrue();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Value.Should().NotBeNull();
+        result.Value.SuccessfulInvoices.Should().BeEmpty();
+        result.Value.FailedInvoices.Should().HaveCount(1);
     }
 }

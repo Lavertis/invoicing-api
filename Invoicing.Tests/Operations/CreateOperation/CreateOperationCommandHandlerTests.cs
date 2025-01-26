@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Invoicing.API.Features.Operations.CreateOperation;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
@@ -50,8 +51,8 @@ public class CreateOperationCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        Assert.True(result.IsError);
+        result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        result.IsError.Should().BeTrue();
     }
 
     [Theory]
@@ -117,14 +118,14 @@ public class CreateOperationCommandHandlerTests : BaseTest
         // Assert
         if (isValid)
         {
-            Assert.Equal(StatusCodes.Status201Created, result.StatusCode);
-            Assert.NotNull(result.Value);
-            Assert.True(result.IsSuccess);
+            result.StatusCode.Should().Be(StatusCodes.Status201Created);
+            result.Value.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
         }
         else
         {
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-            Assert.True(result.IsError);
+            result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+            result.IsError.Should().BeTrue();
         }
     }
 }
