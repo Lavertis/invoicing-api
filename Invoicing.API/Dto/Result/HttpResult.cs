@@ -2,8 +2,17 @@
 
 namespace Invoicing.API.Dto.Result;
 
-public sealed class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
+public class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
 {
+    public HttpResult()
+    {
+    }
+
+    public HttpResult(IEnumerable<ValidationFailure> validationFailures)
+    {
+        WithValidationErrors(validationFailures);
+    }
+
     public IDictionary<string, string[]>? ValidationErrors { get; private set; }
     public int StatusCode { get; private set; } = StatusCodes.Status200OK;
     public bool HasValidationErrors => ValidationErrors != null;

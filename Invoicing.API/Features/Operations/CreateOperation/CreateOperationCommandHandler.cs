@@ -1,4 +1,3 @@
-using FluentValidation;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.Domain.Entities;
@@ -9,18 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public sealed class CreateOperationCommandHandler(
-    InvoicingDbContext context,
-    IValidator<CreateOperationCommand> validator)
+public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
     : IRequestHandler<CreateOperationCommand, HttpResult<IdResponse<Guid>>>
 {
-    public async Task<HttpResult<IdResponse<Guid>>> Handle(CreateOperationCommand request,
+    public async Task<HttpResult<IdResponse<Guid>>> Handle(
+        CreateOperationCommand request,
         CancellationToken cancellationToken)
     {
         var result = new HttpResult<IdResponse<Guid>>();
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return result.WithValidationErrors(validationResult.Errors);
 
         var lastOperation = await FetchLastServiceOperation(request, cancellationToken);
         var isOperationValidResult = IsOperationValid(request, lastOperation);

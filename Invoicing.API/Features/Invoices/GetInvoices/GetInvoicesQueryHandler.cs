@@ -1,5 +1,4 @@
 using AutoMapper;
-using FluentValidation;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.API.Features.Invoices.Shared;
@@ -9,20 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.GetInvoices;
 
-public sealed class GetInvoicesQueryHandler(
-    InvoicingDbContext context,
-    IValidator<GetInvoicesQuery> validator,
-    IMapper mapper
-) : IRequestHandler<GetInvoicesQuery, HttpResult<PaginatedResponse<InvoiceResponse>>>
+public sealed class GetInvoicesQueryHandler(InvoicingDbContext context, IMapper mapper)
+    : IRequestHandler<GetInvoicesQuery, HttpResult<PaginatedResponse<InvoiceResponse>>>
 {
     public async Task<HttpResult<PaginatedResponse<InvoiceResponse>>> Handle(
         GetInvoicesQuery request,
         CancellationToken cancellationToken)
     {
         var result = new HttpResult<PaginatedResponse<InvoiceResponse>>();
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return result.WithValidationErrors(validationResult.Errors);
 
         var invoiceQuery = context.Invoices
             .Include(i => i.Items.OrderBy(item => item.StartDate).ThenBy(item => item.EndDate))

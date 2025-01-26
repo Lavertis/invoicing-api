@@ -1,4 +1,3 @@
-using FluentValidation;
 using Invoicing.API.Dto.Result;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
@@ -8,10 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public sealed class CreateInvoicesCommandHandler(
-    InvoicingDbContext context,
-    IValidator<CreateInvoicesCommand> validator
-) : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesCommandResponse>>
+public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
+    : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesCommandResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
     private readonly List<SuccessfulInvoice> _successfulInvoices = [];
@@ -21,9 +18,6 @@ public sealed class CreateInvoicesCommandHandler(
         CancellationToken cancellationToken)
     {
         var result = new HttpResult<CreateInvoicesCommandResponse>();
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return result.WithValidationErrors(validationResult.Errors);
 
         var clientIds = await GetClientIdsWithOperations(request.Year, request.Month);
         foreach (var clientId in clientIds)
