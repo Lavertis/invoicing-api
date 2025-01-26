@@ -1,3 +1,4 @@
+using Invoicing.API.Dto.Common;
 using Invoicing.API.Features.Invoices.CreateInvoices;
 using Invoicing.API.Features.Invoices.GetInvoices;
 using Invoicing.API.Features.Invoices.Shared;
@@ -19,7 +20,6 @@ public sealed class InvoiceController(IMediator mediator) : BaseController
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<InvoiceResponse>>> GetInvoice([FromQuery] GetInvoicesQuery query)
+    public async Task<ActionResult<PaginatedResponse<InvoiceResponse>>> GetInvoice([FromQuery] GetInvoicesQuery query)
         => CreateResponse(await mediator.Send(query));
 }

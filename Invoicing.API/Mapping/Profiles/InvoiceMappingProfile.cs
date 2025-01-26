@@ -4,7 +4,7 @@ using Invoicing.Domain.Entities;
 
 namespace Invoicing.API.Mapping.Profiles
 {
-    public class InvoiceMappingProfile : Profile
+    public sealed class InvoiceMappingProfile : Profile
     {
         public InvoiceMappingProfile()
         {

@@ -7,6 +7,7 @@ public sealed class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
     public IDictionary<string, string[]>? ValidationErrors { get; private set; }
     public int StatusCode { get; private set; } = StatusCodes.Status200OK;
     public bool HasValidationErrors => ValidationErrors != null;
+    public PaginationMetadata? Pagination { get; private set; }
 
     public HttpResult<TValue> WithStatusCode(int statusCode)
     {
@@ -28,4 +29,23 @@ public sealed class HttpResult<TValue> : Result<HttpResult<TValue>, TValue>
         StatusCode = StatusCodes.Status400BadRequest;
         return this;
     }
+
+    public HttpResult<TValue> WithPagination(int pageNumber, int pageSize, int totalRecords)
+    {
+        Pagination = new PaginationMetadata
+        {
+            Page = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalRecords
+        };
+        return this;
+    }
+}
+
+public sealed class PaginationMetadata
+{
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
 }

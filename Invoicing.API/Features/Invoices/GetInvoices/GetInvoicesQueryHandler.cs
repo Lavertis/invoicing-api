@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.API.Features.Invoices.Shared;
 using Invoicing.Infrastructure.Database;
@@ -12,13 +13,13 @@ public sealed class GetInvoicesQueryHandler(
     InvoicingDbContext context,
     IValidator<GetInvoicesQuery> validator,
     IMapper mapper
-) : IRequestHandler<GetInvoicesQuery, HttpResult<IEnumerable<InvoiceResponse>>>
+) : IRequestHandler<GetInvoicesQuery, HttpResult<PaginatedResponse<InvoiceResponse>>>
 {
-    public async Task<HttpResult<IEnumerable<InvoiceResponse>>> Handle(
+    public async Task<HttpResult<PaginatedResponse<InvoiceResponse>>> Handle(
         GetInvoicesQuery request,
         CancellationToken cancellationToken)
     {
-        var result = new HttpResult<IEnumerable<InvoiceResponse>>();
+        var result = new HttpResult<PaginatedResponse<InvoiceResponse>>();
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
@@ -34,8 +35,20 @@ public sealed class GetInvoicesQueryHandler(
         if (request.Year is not null)
             invoiceQuery = invoiceQuery.Where(i => i.Year == request.Year);
 
-        var invoices = await invoiceQuery.ToListAsync(cancellationToken);
-        var response = invoices.Select(mapper.Map<InvoiceResponse>);
-        return result.WithValue(response);
+        var invoiceResponses = await invoiceQuery
+            .OrderBy(i => i.CreatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(i => mapper.Map<InvoiceResponse>(i))
+            .ToListAsync(cancellationToken);
+
+        var paginatedResponse = new PaginatedResponse<InvoiceResponse>
+        {
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalCount = await invoiceQuery.CountAsync(cancellationToken),
+            Records = invoiceResponses
+        };
+        return result.WithValue(paginatedResponse);
     }
 }
