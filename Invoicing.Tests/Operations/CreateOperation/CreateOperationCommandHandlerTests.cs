@@ -3,7 +3,7 @@ using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 
-namespace Invoicing.Tests;
+namespace Invoicing.Tests.Operations.CreateOperation;
 
 public class CreateOperationCommandHandlerTests : BaseTest
 {

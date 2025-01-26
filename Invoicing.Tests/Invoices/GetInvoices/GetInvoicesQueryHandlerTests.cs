@@ -1,7 +1,7 @@
 using Invoicing.API.Features.Invoices.GetInvoices;
 using Invoicing.Domain.Entities;
 
-namespace Invoicing.Tests;
+namespace Invoicing.Tests.Invoices.GetInvoices;
 
 public class GetInvoicesQueryHandlerTests : BaseTest
 {

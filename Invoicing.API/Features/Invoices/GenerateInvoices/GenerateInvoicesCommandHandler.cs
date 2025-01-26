@@ -5,19 +5,19 @@ using Invoicing.Infrastructure.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Invoicing.API.Features.Invoices.CreateInvoices;
+namespace Invoicing.API.Features.Invoices.GenerateInvoices;
 
-public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
-    : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesCommandResponse>>
+public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
+    : IRequestHandler<GenerateInvoicesCommand, HttpResult<GenerateInvoicesCommandResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
     private readonly List<SuccessfulInvoice> _successfulInvoices = [];
 
-    public async Task<HttpResult<CreateInvoicesCommandResponse>> Handle(
-        CreateInvoicesCommand request,
+    public async Task<HttpResult<GenerateInvoicesCommandResponse>> Handle(
+        GenerateInvoicesCommand request,
         CancellationToken cancellationToken)
     {
-        var result = new HttpResult<CreateInvoicesCommandResponse>();
+        var result = new HttpResult<GenerateInvoicesCommandResponse>();
 
         var clientIds = await GetClientIdsWithOperations(request.Year, request.Month);
         foreach (var clientId in clientIds)
@@ -47,7 +47,7 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        var response = new CreateInvoicesCommandResponse(_successfulInvoices, _failedInvoices);
+        var response = new GenerateInvoicesCommandResponse(_successfulInvoices, _failedInvoices);
         return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
     }
 

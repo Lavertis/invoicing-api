@@ -1,6 +1,6 @@
-namespace Invoicing.API.Features.Invoices.CreateInvoices;
+namespace Invoicing.API.Features.Invoices.GenerateInvoices;
 
-public sealed record CreateInvoicesCommandResponse(
+public sealed record GenerateInvoicesCommandResponse(
     ICollection<SuccessfulInvoice> SuccessfulInvoices,
     ICollection<FailedInvoice> FailedInvoices
 );

@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Invoicing.API.Features.Invoices.CreateInvoices;
+namespace Invoicing.API.Features.Invoices.GenerateInvoices;
 
-public sealed class CreateInvoicesCommandValidator : AbstractValidator<CreateInvoicesCommand>
+public sealed class GenerateInvoicesCommandValidator : AbstractValidator<GenerateInvoicesCommand>
 {
-    public CreateInvoicesCommandValidator()
+    public GenerateInvoicesCommandValidator()
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 

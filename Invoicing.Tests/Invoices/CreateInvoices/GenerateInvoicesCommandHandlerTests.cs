@@ -1,24 +1,24 @@
-using Invoicing.API.Features.Invoices.CreateInvoices;
+using Invoicing.API.Features.Invoices.GenerateInvoices;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 
-namespace Invoicing.Tests;
+namespace Invoicing.Tests.Invoices.CreateInvoices;
 
-public class CreateInvoicesCommandHandlerTests : BaseTest
+public class GenerateInvoicesCommandHandlerTests : BaseTest
 {
-    private readonly CreateInvoicesCommandHandler _handler;
+    private readonly GenerateInvoicesCommandHandler _handler;
 
-    public CreateInvoicesCommandHandlerTests()
+    public GenerateInvoicesCommandHandlerTests()
     {
-        _handler = new CreateInvoicesCommandHandler(Context);
+        _handler = new GenerateInvoicesCommandHandler(Context);
     }
 
     [Fact]
     public async Task Handle_ShouldReturnSuccessResult_WhenInvoicesAreCreatedSuccessfully()
     {
         // Arrange
-        var command = new CreateInvoicesCommand { Month = 1, Year = 2023 };
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2023 };
         var cancellationToken = CancellationToken.None;
 
         // Seed data
@@ -54,7 +54,7 @@ public class CreateInvoicesCommandHandlerTests : BaseTest
     public async Task Handle_ShouldReturnFailedResult_WhenInvoiceCreationFails()
     {
         // Arrange
-        var command = new CreateInvoicesCommand { Month = 1, Year = 2023 };
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2023 };
         var cancellationToken = CancellationToken.None;
 
         // Seed data
@@ -87,7 +87,7 @@ public class CreateInvoicesCommandHandlerTests : BaseTest
     public async Task Handle_ShouldReturnFailedInvoice_WhenInvoiceAlreadyExistsAndOperationsAreNotInvoiced()
     {
         // Arrange
-        var command = new CreateInvoicesCommand { Month = 1, Year = 2023 };
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2023 };
         var cancellationToken = CancellationToken.None;
 
         // Seed data
