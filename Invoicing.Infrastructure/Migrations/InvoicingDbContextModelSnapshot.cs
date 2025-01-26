@@ -59,7 +59,7 @@ namespace Invoicing.Infrastructure.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("InvoiceId")
+                    b.Property<Guid>("InvoiceId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsSuspended")
@@ -152,7 +152,9 @@ namespace Invoicing.Infrastructure.Migrations
                 {
                     b.HasOne("Invoicing.Domain.Entities.Invoice", null)
                         .WithMany("Items")
-                        .HasForeignKey("InvoiceId");
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvisionOperation", b =>

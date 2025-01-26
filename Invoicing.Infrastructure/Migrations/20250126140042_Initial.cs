@@ -54,7 +54,7 @@ namespace Invoicing.Infrastructure.Migrations
                     EndDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Value = table.Column<decimal>(type: "TEXT", nullable: false),
                     IsSuspended = table.Column<bool>(type: "INTEGER", nullable: false),
-                    InvoiceId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    InvoiceId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -65,7 +65,8 @@ namespace Invoicing.Infrastructure.Migrations
                         name: "FK_InvoiceItem_Invoices_InvoiceId",
                         column: x => x.InvoiceId,
                         principalTable: "Invoices",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
