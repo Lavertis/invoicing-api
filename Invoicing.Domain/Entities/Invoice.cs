@@ -8,5 +8,5 @@ public sealed class Invoice : BaseEntity
     public required string ClientId { get; set; }
     public int Year { get; set; }
     public int Month { get; set; }
-    public List<InvoiceItem> Items { get; } = [];
+    public List<InvoiceItem> Items { get; set; } = [];
 }
