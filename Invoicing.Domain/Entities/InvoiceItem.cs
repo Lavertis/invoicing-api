@@ -1,8 +1,7 @@
 namespace Invoicing.Domain.Entities;
 
-public class InvoiceItem
+public class InvoiceItem : BaseEntity
 {
-    public Guid Id { get; set; }
     public required string ServiceId { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }

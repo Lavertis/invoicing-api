@@ -33,10 +33,16 @@ namespace Invoicing.Infrastructure.Migrations
                     b.Property<int>("Month")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Year")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId", "Year", "Month")
+                        .IsUnique();
 
                     b.ToTable("Invoices");
                 });
@@ -45,6 +51,9 @@ namespace Invoicing.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("EndDate")
@@ -63,6 +72,9 @@ namespace Invoicing.Infrastructure.Migrations
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("Value")
                         .HasColumnType("TEXT");
 
@@ -73,7 +85,7 @@ namespace Invoicing.Infrastructure.Migrations
                     b.ToTable("InvoiceItem");
                 });
 
-            modelBuilder.Entity("Invoicing.Domain.Entities.Operation", b =>
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvision", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -83,7 +95,7 @@ namespace Invoicing.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("Date")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("PricePerDay")
@@ -96,16 +108,44 @@ namespace Invoicing.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId", "ServiceId", "Date")
-                        .IsDescending(false, false, true);
+                    b.HasIndex("ServiceId", "ClientId");
 
-                    b.ToTable("Operations");
+                    b.ToTable("ServiceProvisions");
+                });
+
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvisionOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ServiceProvisionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceProvisionId", "Date")
+                        .IsDescending(false, true);
+
+                    b.ToTable("ServiceProvisionOperations");
                 });
 
             modelBuilder.Entity("Invoicing.Domain.Entities.InvoiceItem", b =>
@@ -115,9 +155,25 @@ namespace Invoicing.Infrastructure.Migrations
                         .HasForeignKey("InvoiceId");
                 });
 
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvisionOperation", b =>
+                {
+                    b.HasOne("Invoicing.Domain.Entities.ServiceProvision", "ServiceProvision")
+                        .WithMany("Operations")
+                        .HasForeignKey("ServiceProvisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ServiceProvision");
+                });
+
             modelBuilder.Entity("Invoicing.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvision", b =>
+                {
+                    b.Navigation("Operations");
                 });
 #pragma warning restore 612, 618
         }

@@ -55,9 +55,9 @@ public sealed class CreateInvoicesCommandHandler(
 
     private async Task<List<string>> GetClientIdsWithOperations(int year, int month)
     {
-        return await context.Operations
+        return await context.ServiceProvisionOperations
             .Where(o => o.Date.Year == year && o.Date.Month == month)
-            .Select(o => o.ClientId)
+            .Select(o => o.ServiceProvision.ClientId)
             .Distinct()
             .ToListAsync();
     }
@@ -71,15 +71,16 @@ public sealed class CreateInvoicesCommandHandler(
             .FirstOrDefaultAsync();
     }
 
-    private async Task<IList<Operation>> GetOperationsForClient(string clientId, int year, int month)
+    private async Task<IList<ServiceProvisionOperation>> GetOperationsForClient(string clientId, int year, int month)
     {
-        return await context.Operations
-            .Where(o => o.Date.Year == year && o.Date.Month == month && o.ClientId == clientId)
+        return await context.ServiceProvisionOperations
+            .Include(o => o.ServiceProvision)
+            .Where(o => o.ServiceProvision.ClientId == clientId && o.Date.Year == year && o.Date.Month == month)
             .OrderBy(o => o.Date)
             .ToListAsync();
     }
 
-    private void ValidateAllClientOperationsAreInvoiced(IList<Operation> operations, Invoice invoice)
+    private void ValidateAllClientOperationsAreInvoiced(IList<ServiceProvisionOperation> operations, Invoice invoice)
     {
         var areAllOperationsInvoiced = AreAllOperationsInvoiced(operations, invoice);
         if (!areAllOperationsInvoiced)
@@ -90,38 +91,39 @@ public sealed class CreateInvoicesCommandHandler(
         }
     }
 
-    private bool AreAllOperationsInvoiced(IEnumerable<Operation> operations, Invoice invoice)
+    private bool AreAllOperationsInvoiced(IEnumerable<ServiceProvisionOperation> operations, Invoice invoice)
     {
         return operations
             .All(operation => invoice.Items
                 .Any(item =>
-                    item.ServiceId == operation.ServiceId &&
+                    item.ServiceId == operation.ServiceProvision.ServiceId &&
                     item.StartDate <= operation.Date &&
                     item.EndDate >= operation.Date
                 )
             );
     }
 
-    private CommonResult<Invoice?> CreateInvoiceForClient(IList<Operation> operations)
+    private CommonResult<Invoice?> CreateInvoiceForClient(IList<ServiceProvisionOperation> operations)
     {
         var result = new CommonResult<Invoice?>();
         var firstOperation = operations.First();
+        var clientId = firstOperation.ServiceProvision.ClientId;
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
-            ClientId = firstOperation.ClientId,
+            ClientId = clientId,
             CreatedAt = DateTime.UtcNow,
             Year = firstOperation.Date.Year,
             Month = firstOperation.Date.Month
         };
 
-        foreach (var serviceOperationsGroup in operations.GroupBy(o => o.ServiceId))
+        foreach (var serviceOperationsGroup in operations.GroupBy(o => o.ServiceProvision.ServiceId))
         {
             if (operations.Last().Type != OperationType.EndService)
             {
-                var errorMsg = $"The last operation for client {firstOperation.ClientId} for service " +
+                var errorMsg = $"The last operation for client {clientId} for service " +
                                $"{serviceOperationsGroup.Key} is not {OperationType.EndService}.";
-                LogFailedInvoice(firstOperation.ClientId, errorMsg);
+                LogFailedInvoice(clientId, errorMsg);
                 return result.WithError(errorMsg);
             }
 
@@ -130,22 +132,24 @@ public sealed class CreateInvoicesCommandHandler(
         }
 
         return invoice.Items.Count == 0
-            ? result.WithError($"Invoice items list is empty for client {firstOperation.ClientId}.")
+            ? result.WithError($"Invoice items list is empty for client {clientId}.")
             : result.WithValue(invoice);
     }
 
-    private IEnumerable<InvoiceItem> CreateInvoiceItemsForService(IEnumerable<Operation> operations)
+    private IEnumerable<InvoiceItem> CreateInvoiceItemsForService(IEnumerable<ServiceProvisionOperation> operations)
     {
         return operations
             .Chunk(2)
             .Select(operationsChunk => CreateInvoiceItem(operationsChunk[0], operationsChunk[1]));
     }
 
-    private InvoiceItem CreateInvoiceItem(Operation beginOperation, Operation endOperation)
+    private InvoiceItem CreateInvoiceItem(
+        ServiceProvisionOperation beginOperation,
+        ServiceProvisionOperation endOperation)
     {
         var invoiceItem = new InvoiceItem
         {
-            ServiceId = beginOperation.ServiceId,
+            ServiceId = beginOperation.ServiceProvision.ServiceId,
             StartDate = beginOperation.Date,
             EndDate = endOperation.Date,
             IsSuspended = endOperation.Type == OperationType.SuspendService,
@@ -154,12 +158,14 @@ public sealed class CreateInvoicesCommandHandler(
         return invoiceItem;
     }
 
-    private decimal CalculateInvoiceItemValue(Operation beginOperation, Operation endOperation)
+    private decimal CalculateInvoiceItemValue(
+        ServiceProvisionOperation beginOperation,
+        ServiceProvisionOperation endOperation)
     {
         var startDate = beginOperation.Date.ToDateTime(TimeOnly.MinValue);
         var endDate = endOperation.Date.ToDateTime(TimeOnly.MinValue);
         var days = (endDate - startDate).Days;
-        return beginOperation.PricePerDay * beginOperation.Quantity * days;
+        return beginOperation.ServiceProvision.PricePerDay * beginOperation.ServiceProvision.Quantity * days;
     }
 
     private void LogFailedInvoice(string clientId, string? reason)

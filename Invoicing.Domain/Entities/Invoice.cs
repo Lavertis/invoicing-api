@@ -1,10 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Invoicing.Domain.Entities;
 
-public class Invoice
+[Index(nameof(ClientId), nameof(Year), nameof(Month), IsUnique = true)]
+public class Invoice : BaseEntity
 {
-    public Guid Id { get; set; }
     public required string ClientId { get; set; }
-    public DateTime CreatedAt { get; set; }
     public int Year { get; set; }
     public int Month { get; set; }
     public List<InvoiceItem> Items { get; } = [];

@@ -22,11 +22,7 @@ public sealed class CreateOperationCommandHandler(
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
 
-        var lastOperation = await context.Operations
-            .Where(o => o.ClientId == request.ClientId && o.ServiceId == request.ServiceId)
-            .OrderByDescending(o => o.Date)
-            .FirstOrDefaultAsync(cancellationToken);
-
+        var lastOperation = await FetchLastServiceOperation(request, cancellationToken);
         var isOperationValidResult = IsOperationValid(request, lastOperation);
         if (!isOperationValidResult.Value)
         {
@@ -35,13 +31,11 @@ public sealed class CreateOperationCommandHandler(
                 .WithError(isOperationValidResult.ErrorMessage);
         }
 
-        var operation = new Operation
+        var serviceProvision = lastOperation?.ServiceProvision ?? CreateServiceProvision(request);
+        var operation = new ServiceProvisionOperation
         {
             Id = Guid.NewGuid(),
-            ServiceId = request.ServiceId,
-            ClientId = request.ClientId,
-            Quantity = request.Quantity ?? lastOperation!.Quantity,
-            PricePerDay = request.PricePerDay ?? lastOperation!.PricePerDay,
+            ServiceProvision = serviceProvision,
             Date = request.Date,
             Type = request.Type
         };
@@ -52,7 +46,35 @@ public sealed class CreateOperationCommandHandler(
         return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
     }
 
-    private CommonResult<bool> IsOperationValid(CreateOperationCommand request, Operation? lastOperation)
+    private async Task<ServiceProvisionOperation?> FetchLastServiceOperation(
+        CreateOperationCommand request,
+        CancellationToken cancellationToken)
+    {
+        return await context.ServiceProvisionOperations
+            .Include(o => o.ServiceProvision)
+            .Where(o =>
+                o.ServiceProvision.ClientId == request.ClientId &&
+                o.ServiceProvision.ServiceId == request.ServiceId
+            )
+            .OrderByDescending(o => o.Date)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private ServiceProvision CreateServiceProvision(CreateOperationCommand request)
+    {
+        return new ServiceProvision
+        {
+            Id = Guid.NewGuid(),
+            ServiceId = request.ServiceId,
+            ClientId = request.ClientId,
+            Quantity = request.Quantity!.Value,
+            PricePerDay = request.PricePerDay!.Value
+        };
+    }
+
+    private CommonResult<bool> IsOperationValid(
+        CreateOperationCommand request,
+        ServiceProvisionOperation? lastOperation)
     {
         if (lastOperation is not null && lastOperation.Date >= request.Date)
         {
