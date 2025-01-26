@@ -5,6 +5,14 @@ public sealed record CreateInvoicesCommandResponse(
     ICollection<FailedInvoice> FailedInvoices
 );
 
-public sealed record SuccessfulInvoice(Guid InvoiceId, string ClientId);
+public sealed class SuccessfulInvoice
+{
+    public Guid InvoiceId { get; init; }
+    public required string ClientId { get; init; }
+}
 
-public sealed record FailedInvoice(string ClientId, string Reason);
+public sealed class FailedInvoice
+{
+    public required string ClientId { get; init; }
+    public required string Reason { get; init; }
+}

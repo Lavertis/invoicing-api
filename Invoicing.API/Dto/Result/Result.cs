@@ -6,6 +6,7 @@ public abstract class Result<TResult, TValue> where TResult : Result<TResult, TV
     public TValue? Value { get; private set; }
 
     public bool IsError { get; private set; }
+    public bool IsSuccess => !IsError;
 
     public TResult WithValue(TValue value)
     {

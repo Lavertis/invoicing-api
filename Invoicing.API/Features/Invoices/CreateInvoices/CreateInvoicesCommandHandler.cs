@@ -163,8 +163,8 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
     }
 
     private void LogFailedInvoice(string clientId, string? reason)
-        => _failedInvoices.Add(new FailedInvoice(clientId, reason ?? "Unknown reason"));
+        => _failedInvoices.Add(new FailedInvoice { ClientId = clientId, Reason = reason ?? "Unknown reason" });
 
     private void LogSuccessfulInvoice(Guid invoiceId, string clientId)
-        => _successfulInvoices.Add(new SuccessfulInvoice(invoiceId, clientId));
+        => _successfulInvoices.Add(new SuccessfulInvoice { InvoiceId = invoiceId, ClientId = clientId });
 }

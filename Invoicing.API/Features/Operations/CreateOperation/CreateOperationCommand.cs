@@ -5,11 +5,12 @@ using MediatR;
 
 namespace Invoicing.API.Features.Operations.CreateOperation;
 
-public sealed record CreateOperationCommand(
-    string ServiceId,
-    string ClientId,
-    int? Quantity,
-    decimal? PricePerDay,
-    DateOnly Date,
-    OperationType Type
-) : IRequest<HttpResult<IdResponse<Guid>>>;
+public sealed class CreateOperationCommand : IRequest<HttpResult<IdResponse<Guid>>>
+{
+    public required string ServiceId { get; init; }
+    public required string ClientId { get; init; }
+    public int? Quantity { get; init; }
+    public decimal? PricePerDay { get; init; }
+    public DateOnly Date { get; init; }
+    public OperationType Type { get; init; }
+}

@@ -1,20 +1,20 @@
 namespace Invoicing.API.Features.Invoices.Shared;
 
-public sealed record InvoiceResponse(
-    Guid Id,
-    string ClientId,
-    int Year,
-    int Month,
-    ICollection<InvoiceItemResponse> Items
-)
+public sealed class InvoiceResponse
 {
-    public decimal TotalValue { get; } = Items.Sum(item => item.Value);
+    public Guid Id { get; init; }
+    public required string ClientId { get; init; }
+    public int Year { get; init; }
+    public int Month { get; init; }
+    public decimal TotalValue => Items.Sum(item => item.Value);
+    public required ICollection<InvoiceItemResponse> Items { get; init; }
 }
 
-public sealed record InvoiceItemResponse(
-    DateOnly StartDate,
-    DateOnly EndDate,
-    decimal Value,
-    bool IsSuspended,
-    string ServiceId
-);
+public sealed class InvoiceItemResponse
+{
+    public DateOnly StartDate { get; init; }
+    public DateOnly EndDate { get; init; }
+    public decimal Value { get; init; }
+    public bool IsSuspended { get; init; }
+    public required string ServiceId { get; init; }
+}

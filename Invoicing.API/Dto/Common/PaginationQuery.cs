@@ -1,7 +1,19 @@
 namespace Invoicing.API.Dto.Common;
 
-public record PaginationQuery(int Page = 1, int PageSize = 10)
+public class PaginationQuery
 {
-    public int Page { get; } = Page < 1 ? 1 : Page;
-    public int PageSize { get; } = PageSize < 0 ? 1 : PageSize > 50 ? 50 : PageSize;
+    private readonly int _page = 1;
+    private readonly int _pageSize = 10;
+
+    public int Page
+    {
+        get => _page;
+        init => _page = value > 0 ? value : 1;
+    }
+
+    public int PageSize
+    {
+        get => _pageSize;
+        init => _pageSize = value is > 0 and <= 50 ? value : 10;
+    }
 }

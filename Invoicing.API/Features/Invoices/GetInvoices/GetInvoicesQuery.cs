@@ -5,5 +5,9 @@ using MediatR;
 
 namespace Invoicing.API.Features.Invoices.GetInvoices;
 
-public sealed record GetInvoicesQuery(string? ClientId, int? Month, int? Year)
-    : PaginationQuery, IRequest<HttpResult<PaginatedResponse<InvoiceResponse>>>;
+public sealed class GetInvoicesQuery : PaginationQuery, IRequest<HttpResult<PaginatedResponse<InvoiceResponse>>>
+{
+    public string? ClientId { get; init; }
+    public int? Month { get; init; }
+    public int? Year { get; init; }
+}

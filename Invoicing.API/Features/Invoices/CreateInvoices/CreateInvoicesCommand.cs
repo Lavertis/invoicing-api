@@ -3,4 +3,8 @@ using MediatR;
 
 namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
-public sealed record CreateInvoicesCommand(int Month, int Year) : IRequest<HttpResult<CreateInvoicesCommandResponse>>;
+public sealed class CreateInvoicesCommand : IRequest<HttpResult<CreateInvoicesCommandResponse>>
+{
+    public int Month { get; init; }
+    public int Year { get; init; }
+}
