@@ -10,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDatabaseModule(builder.Configuration);
 builder.Services.AddMiddlewareModule();
-builder.Services.AddAutoMapperModule();
+builder.Services.AddMapsterModule();
 builder.Services.AddFluentValidators();
 builder.Services.AddMediatorModule();
 

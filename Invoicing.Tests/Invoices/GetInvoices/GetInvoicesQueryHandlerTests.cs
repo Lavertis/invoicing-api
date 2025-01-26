@@ -10,7 +10,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
 
     public GetInvoicesQueryHandlerTests()
     {
-        _handler = new GetInvoicesQueryHandler(Context, Mapper);
+        _handler = new GetInvoicesQueryHandler(Context);
     }
 
     [Fact]

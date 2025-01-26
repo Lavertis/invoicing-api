@@ -1,15 +1,15 @@
-using AutoMapper;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.API.Features.Invoices.Shared;
 using Invoicing.Domain.Entities;
 using Invoicing.Infrastructure.Database;
+using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.GetInvoices;
 
-public sealed class GetInvoicesQueryHandler(InvoicingDbContext context, IMapper mapper)
+public sealed class GetInvoicesQueryHandler(InvoicingDbContext context)
     : IRequestHandler<GetInvoicesQuery, HttpResult<PaginatedResponse<InvoiceResponse>>>
 {
     public async Task<HttpResult<PaginatedResponse<InvoiceResponse>>> Handle(
@@ -34,7 +34,7 @@ public sealed class GetInvoicesQueryHandler(InvoicingDbContext context, IMapper 
     {
         var paginatedQuery = Paginate(request, query);
         var invoiceResponses = await paginatedQuery
-            .Select(i => mapper.Map<InvoiceResponse>(i))
+            .ProjectToType<InvoiceResponse>()
             .ToListAsync(cancellationToken: cancellationToken);
 
         return new PaginatedResponse<InvoiceResponse>

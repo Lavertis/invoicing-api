@@ -1,5 +1,3 @@
-using AutoMapper;
-using Invoicing.API.Mapping;
 using Invoicing.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +6,6 @@ namespace Invoicing.Tests;
 public class BaseTest : IDisposable, IAsyncDisposable
 {
     protected readonly InvoicingDbContext Context;
-    protected readonly IMapper Mapper;
     private bool _disposed;
 
     protected BaseTest()
@@ -19,7 +16,6 @@ public class BaseTest : IDisposable, IAsyncDisposable
 
         Context = new InvoicingDbContext(options);
         Context.Database.EnsureCreated();
-        Mapper = AutoMapperModule.CreateAutoMapper();
     }
 
     public async ValueTask DisposeAsync()
