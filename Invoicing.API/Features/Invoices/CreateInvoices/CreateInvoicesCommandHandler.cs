@@ -25,14 +25,27 @@ public sealed class CreateInvoicesCommandHandler(
         if (!validationResult.IsValid)
             return result.WithValidationErrors(validationResult.Errors);
 
-        var operations = await GetOperations(request.Year, request.Month);
-        foreach (var clientOperationsGroup in operations.GroupBy(o => o.ClientId))
+        var clientIds = await GetClientIdsWithOperations(request.Year, request.Month);
+        foreach (var clientId in clientIds)
         {
-            var isClientAlreadyInvoiced = await IsClientAlreadyInvoicedAsync(
-                request.Year, request.Month, clientOperationsGroup, cancellationToken
-            );
-            if (isClientAlreadyInvoiced) continue;
-            ProcessClient(clientOperationsGroup);
+            var clientOperations = await GetOperationsForClient(clientId, request.Year, request.Month);
+            var existingInvoice = await GetExistingInvoiceAsync(clientId, request.Year, request.Month);
+            if (existingInvoice != null)
+            {
+                ValidateAllClientOperationsAreInvoiced(clientOperations, existingInvoice);
+                continue;
+            }
+
+            var createInvoiceResult = CreateInvoiceForClient(clientOperations);
+            if (createInvoiceResult.IsError)
+            {
+                LogFailedInvoice(clientId, createInvoiceResult.ErrorMessage);
+                continue;
+            }
+
+            var invoice = createInvoiceResult.Value!;
+            context.Invoices.Add(invoice);
+            LogSuccessfulInvoice(invoice.Id, invoice.ClientId);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -40,38 +53,41 @@ public sealed class CreateInvoicesCommandHandler(
         return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
     }
 
-    private async Task<IEnumerable<Operation>> GetOperations(int year, int month)
+    private async Task<List<string>> GetClientIdsWithOperations(int year, int month)
     {
-        return await context.Operations // TODO: process one client at a time
+        return await context.Operations
             .Where(o => o.Date.Year == year && o.Date.Month == month)
+            .Select(o => o.ClientId)
+            .Distinct()
+            .ToListAsync();
+    }
+
+    private async Task<Invoice?> GetExistingInvoiceAsync(string clientId, int year, int month)
+    {
+        return await context.Invoices
+            .Include(i => i.Items)
+            .Where(i => i.ClientId == clientId)
+            .Where(i => i.Year == year && i.Month == month)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<IList<Operation>> GetOperationsForClient(string clientId, int year, int month)
+    {
+        return await context.Operations
+            .Where(o => o.Date.Year == year && o.Date.Month == month && o.ClientId == clientId)
             .OrderBy(o => o.Date)
             .ToListAsync();
     }
 
-    private async Task<bool> IsClientAlreadyInvoicedAsync(
-        int year,
-        int month, // TODO refactor
-        IGrouping<string, Operation> clientOperationsGroup,
-        CancellationToken cancellationToken)
+    private void ValidateAllClientOperationsAreInvoiced(IList<Operation> operations, Invoice invoice)
     {
-        var clientId = clientOperationsGroup.Key;
-        var existingInvoice = await context.Invoices
-            .Include(i => i.Items)
-            .Where(i => i.ClientId == clientId)
-            .Where(i => i.Year == year && i.Month == month)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (existingInvoice == null) return false;
-
-        var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientOperationsGroup, existingInvoice);
+        var areAllOperationsInvoiced = AreAllOperationsInvoiced(operations, invoice);
         if (!areAllOperationsInvoiced)
         {
             LogFailedInvoice(
-                clientId, "Client has operations that are not invoiced, but an invoice already exists."
+                invoice.ClientId, "Client has operations that are not invoiced, but an invoice already exists."
             );
         }
-
-        return true;
     }
 
     private bool AreAllOperationsInvoiced(IEnumerable<Operation> operations, Invoice invoice)
@@ -86,52 +102,43 @@ public sealed class CreateInvoicesCommandHandler(
             );
     }
 
-    private void ProcessClient(IGrouping<string, Operation> clientOperationsGroup)
+    private CommonResult<Invoice?> CreateInvoiceForClient(IList<Operation> operations)
     {
-        var clientId = clientOperationsGroup.Key;
-        var firstOperation = clientOperationsGroup.First();
+        var result = new CommonResult<Invoice?>();
+        var firstOperation = operations.First();
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
-            ClientId = clientId,
+            ClientId = firstOperation.ClientId,
             CreatedAt = DateTime.UtcNow,
             Year = firstOperation.Date.Year,
             Month = firstOperation.Date.Month
         };
-        foreach (var serviceOperationsGroup in clientOperationsGroup.GroupBy(o => o.ServiceId))
+
+        foreach (var serviceOperationsGroup in operations.GroupBy(o => o.ServiceId))
         {
-            var processServiceGroupResult = ProcessService(serviceOperationsGroup.ToList(), invoice, clientId);
-            if (processServiceGroupResult.IsError) return;
+            if (operations.Last().Type != OperationType.EndService)
+            {
+                var errorMsg = $"The last operation for client {firstOperation.ClientId} for service " +
+                               $"{serviceOperationsGroup.Key} is not {OperationType.EndService}.";
+                LogFailedInvoice(firstOperation.ClientId, errorMsg);
+                return result.WithError(errorMsg);
+            }
+
+            var invoiceItems = CreateInvoiceItemsForService(serviceOperationsGroup);
+            invoice.Items.AddRange(invoiceItems);
         }
 
-        AddInvoiceIfNotEmpty(invoice, clientId);
+        return invoice.Items.Count == 0
+            ? result.WithError($"Invoice items list is empty for client {firstOperation.ClientId}.")
+            : result.WithValue(invoice);
     }
 
-    private CommonResult<Unit> ProcessService(IList<Operation> serviceOperations, Invoice invoice, string clientId)
+    private IEnumerable<InvoiceItem> CreateInvoiceItemsForService(IEnumerable<Operation> operations)
     {
-        var result = new CommonResult<Unit>();
-        var isLastOperationValid = IsLastOperationValid(serviceOperations.LastOrDefault(), clientId);
-        if (!isLastOperationValid)
-            return result.WithError("The last operation for this service is not an end service.");
-
-        foreach (var operations in serviceOperations.Chunk(2))
-        {
-            var invoiceItem = CreateInvoiceItem(operations[0], operations[1]);
-            invoice.Items.Add(invoiceItem);
-        }
-
-        return result;
-    }
-
-    private bool IsLastOperationValid(Operation? lastOperation, string clientId)
-    {
-        if (lastOperation == null || lastOperation.Type == OperationType.EndService)
-            return true;
-
-        LogFailedInvoice(
-            clientId, $"The last operation for {lastOperation.ServiceId} service is not {OperationType.EndService}."
-        );
-        return false;
+        return operations
+            .Chunk(2)
+            .Select(operationsChunk => CreateInvoiceItem(operationsChunk[0], operationsChunk[1]));
     }
 
     private InvoiceItem CreateInvoiceItem(Operation beginOperation, Operation endOperation)
@@ -155,17 +162,8 @@ public sealed class CreateInvoicesCommandHandler(
         return beginOperation.PricePerDay * beginOperation.Quantity * days;
     }
 
-    private void AddInvoiceIfNotEmpty(Invoice invoice, string clientId)
-    {
-        if (invoice.Items.Count == 0)
-            return;
-
-        context.Invoices.Add(invoice);
-        LogSuccessfulInvoice(invoice.Id, clientId);
-    }
-
-    private void LogFailedInvoice(string clientId, string reason)
-        => _failedInvoices.Add(new FailedInvoice(clientId, reason));
+    private void LogFailedInvoice(string clientId, string? reason)
+        => _failedInvoices.Add(new FailedInvoice(clientId, reason ?? "Unknown reason"));
 
     private void LogSuccessfulInvoice(Guid invoiceId, string clientId)
         => _successfulInvoices.Add(new SuccessfulInvoice(invoiceId, clientId));

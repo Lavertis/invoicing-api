@@ -7,5 +7,5 @@ public class Invoice
     public DateTime CreatedAt { get; set; }
     public int Year { get; set; }
     public int Month { get; set; }
-    public ICollection<InvoiceItem> Items { get; set; } = [];
+    public List<InvoiceItem> Items { get; } = [];
 }
