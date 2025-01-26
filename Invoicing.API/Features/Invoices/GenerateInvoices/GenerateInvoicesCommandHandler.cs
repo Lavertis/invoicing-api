@@ -103,20 +103,12 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
             .ToListAsync();
     }
 
-
-    private CommonResult<Invoice?> CreateInvoiceForClient(IList<ServiceProvisionOperation> operations)
+    private static CommonResult<Invoice?> CreateInvoiceForClient(IList<ServiceProvisionOperation> operations)
     {
         var result = new CommonResult<Invoice?>();
         var firstOperation = operations[0];
         var clientId = firstOperation.ServiceProvision.ClientId;
-        var invoice = new Invoice
-        {
-            Id = Guid.NewGuid(),
-            ClientId = clientId,
-            CreatedAt = DateTime.UtcNow,
-            Year = firstOperation.Date.Year,
-            Month = firstOperation.Date.Month
-        };
+        var invoice = CreateInvoice(clientId, firstOperation.Date);
 
         foreach (var serviceOperationsGroup in operations.GroupBy(o => o.ServiceProvision.ServiceId))
         {
@@ -137,14 +129,28 @@ public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
             : result.WithValue(invoice);
     }
 
-    private IEnumerable<InvoiceItem> CreateInvoiceItemsForService(IEnumerable<ServiceProvisionOperation> operations)
+    private static Invoice CreateInvoice(string clientId, DateOnly date)
+    {
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(),
+            ClientId = clientId,
+            CreatedAt = DateTime.UtcNow,
+            Year = date.Year,
+            Month = date.Month
+        };
+        return invoice;
+    }
+
+    private static IEnumerable<InvoiceItem> CreateInvoiceItemsForService(
+        IEnumerable<ServiceProvisionOperation> operations)
     {
         return operations
             .Chunk(2)
             .Select(operationsChunk => CreateInvoiceItem(operationsChunk[0], operationsChunk[1]));
     }
 
-    private InvoiceItem CreateInvoiceItem(
+    private static InvoiceItem CreateInvoiceItem(
         ServiceProvisionOperation beginOperation,
         ServiceProvisionOperation endOperation)
     {

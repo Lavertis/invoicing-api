@@ -27,18 +27,25 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
         }
 
         var serviceProvision = lastOperation?.ServiceProvision ?? CreateServiceProvision(request);
-        var operation = new ServiceProvisionOperation
+        var operation = CreateServiceProvisionOperation(request, serviceProvision);
+        context.Add(operation);
+        await context.SaveChangesAsync(cancellationToken);
+
+        var response = new IdResponse<Guid>(operation.Id);
+        return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
+    }
+
+    private static ServiceProvisionOperation CreateServiceProvisionOperation(
+        CreateOperationCommand request,
+        ServiceProvision serviceProvision)
+    {
+        return new ServiceProvisionOperation
         {
             Id = Guid.NewGuid(),
             ServiceProvision = serviceProvision,
             Date = request.Date,
             Type = request.Type
         };
-        context.Add(operation);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new IdResponse<Guid>(operation.Id);
-        return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
     }
 
     private async Task<ServiceProvisionOperation?> FetchLastServiceOperation(
@@ -55,7 +62,7 @@ public sealed class CreateOperationCommandHandler(InvoicingDbContext context)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    private ServiceProvision CreateServiceProvision(CreateOperationCommand request)
+    private static ServiceProvision CreateServiceProvision(CreateOperationCommand request)
     {
         return new ServiceProvision
         {

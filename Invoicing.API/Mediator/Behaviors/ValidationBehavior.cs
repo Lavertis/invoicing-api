@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.Results;
 using Invoicing.API.Dto.Result;
 using MediatR;
 
@@ -19,28 +20,30 @@ public sealed class ValidationBehavior<TRequest, TResponse>
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var context = new ValidationContext<TRequest>(request);
+        var errors = await ValidateRequestAsync(request, cancellationToken);
+        if (errors.Count != 0) return HandleValidationErrors(errors);
+        return await next();
+    }
 
+    private async Task<ICollection<ValidationFailure>> ValidateRequestAsync(TRequest request,
+        CancellationToken cancellationToken)
+    {
+        var context = new ValidationContext<TRequest>(request);
         var validationFailures = await Task.WhenAll(
             _validators.Select(validator => validator.ValidateAsync(context, cancellationToken))
         );
-
-        var errors = validationFailures
+        return validationFailures
             .Where(validationResult => !validationResult.IsValid)
             .SelectMany(validationResult => validationResult.Errors)
             .ToList();
+    }
 
-        if (errors.Count != 0)
-        {
-            if (!typeof(HttpResult<>).IsAssignableFrom(typeof(TResponse).GetGenericTypeDefinition()))
-                throw new ValidationException(errors);
+    private static TResponse HandleValidationErrors(IEnumerable<ValidationFailure> errors)
+    {
+        if (!typeof(HttpResult<>).IsAssignableFrom(typeof(TResponse).GetGenericTypeDefinition()))
+            throw new ValidationException(errors);
 
-            var result = (TResponse?)Activator.CreateInstance(typeof(TResponse), errors);
-            return result ?? throw new InvalidOperationException("Cannot create HttpResult in ValidationBehavior");
-        }
-
-        var response = await next();
-
-        return response;
+        var result = (TResponse?)Activator.CreateInstance(typeof(TResponse), errors);
+        return result ?? throw new InvalidOperationException("Cannot create HttpResult in ValidationBehavior");
     }
 }

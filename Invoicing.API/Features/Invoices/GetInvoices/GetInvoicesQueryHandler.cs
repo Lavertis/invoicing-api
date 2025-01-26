@@ -2,6 +2,7 @@ using AutoMapper;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Dto.Result;
 using Invoicing.API.Features.Invoices.Shared;
+using Invoicing.Domain.Entities;
 using Invoicing.Infrastructure.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,31 +18,50 @@ public sealed class GetInvoicesQueryHandler(InvoicingDbContext context, IMapper 
     {
         var result = new HttpResult<PaginatedResponse<InvoiceResponse>>();
 
-        var invoiceQuery = context.Invoices
+        var query = context.Invoices
             .Include(i => i.Items.OrderBy(item => item.StartDate).ThenBy(item => item.EndDate))
             .AsNoTrackingWithIdentityResolution();
 
-        if (request.ClientId is not null)
-            invoiceQuery = invoiceQuery.Where(i => i.ClientId == request.ClientId);
-        if (request.Month is not null)
-            invoiceQuery = invoiceQuery.Where(i => i.Month == request.Month);
-        if (request.Year is not null)
-            invoiceQuery = invoiceQuery.Where(i => i.Year == request.Year);
+        query = ApplyFiltering(request, query);
+        var response = await CreateResponse(request, query, cancellationToken);
+        return result.WithValue(response);
+    }
 
-        var invoiceResponses = await invoiceQuery
-            .OrderBy(i => i.CreatedAt)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+    private async Task<PaginatedResponse<InvoiceResponse>> CreateResponse(
+        GetInvoicesQuery request,
+        IQueryable<Invoice> query,
+        CancellationToken cancellationToken)
+    {
+        var paginatedQuery = Paginate(request, query);
+        var invoiceResponses = await paginatedQuery
             .Select(i => mapper.Map<InvoiceResponse>(i))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken: cancellationToken);
 
-        var paginatedResponse = new PaginatedResponse<InvoiceResponse>
+        return new PaginatedResponse<InvoiceResponse>
         {
             Page = request.Page,
             PageSize = request.PageSize,
-            TotalCount = await invoiceQuery.CountAsync(cancellationToken),
+            TotalCount = await query.CountAsync(cancellationToken),
             Records = invoiceResponses
         };
-        return result.WithValue(paginatedResponse);
+    }
+
+    private static IQueryable<Invoice> Paginate(GetInvoicesQuery request, IQueryable<Invoice> invoiceQuery)
+    {
+        return invoiceQuery
+            .OrderBy(i => i.CreatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize);
+    }
+
+    private static IQueryable<Invoice> ApplyFiltering(GetInvoicesQuery request, IQueryable<Invoice> query)
+    {
+        if (request.ClientId is not null)
+            query = query.Where(i => i.ClientId == request.ClientId);
+        if (request.Month is not null)
+            query = query.Where(i => i.Month == request.Month);
+        if (request.Year is not null)
+            query = query.Where(i => i.Year == request.Year);
+        return query;
     }
 }
