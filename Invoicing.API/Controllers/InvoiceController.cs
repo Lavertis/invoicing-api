@@ -9,7 +9,7 @@ namespace Invoicing.API.Controllers;
 public sealed class InvoiceController(IMediator mediator) : BaseController
 {
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<CreateInvoicesResponse>> CreateInvoices(
         [FromBody] CreateInvoicesCommand command
     ) => CreateResponse(await mediator.Send(command));

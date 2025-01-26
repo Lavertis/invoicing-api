@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Invoicing.Domain.Entities;
 
 [Index(nameof(ClientId), nameof(ServiceId), nameof(Date), IsDescending = [false, false, true])]
-public class Operation
+public class Operation // TODO: add transaction entity
 {
     public Guid Id { get; set; }
     public required string ServiceId { get; set; }

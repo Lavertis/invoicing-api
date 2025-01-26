@@ -16,12 +16,12 @@ public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOp
         RuleFor(x => x.Quantity)
             .NotNull()
             .When(x => x.Type == OperationType.StartService)
-            .WithMessage("Quantity must not be null for starting the service.");
+            .WithMessage("Quantity must be provided for starting the service.");
 
         RuleFor(x => x.Quantity)
             .Null()
             .When(x => x.Type != OperationType.StartService)
-            .WithMessage("Quantity must be null for operations other than starting the service.");
+            .WithMessage("Quantity cannot be provided for operations other than starting the service.");
 
         RuleFor(x => x.PricePerDay)
             .GreaterThanOrEqualTo(0)
@@ -31,11 +31,11 @@ public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOp
         RuleFor(x => x.PricePerDay)
             .NotNull()
             .When(x => x.Type == OperationType.StartService)
-            .WithMessage("Price per day must not be null for starting the service.");
+            .WithMessage("Price per day must be provided for starting the service.");
 
         RuleFor(x => x.PricePerDay)
             .Null()
             .When(x => x.Type != OperationType.StartService)
-            .WithMessage("Price per day must be null for operations other than starting the service.");
+            .WithMessage("Price per day must cannot be provided for operations other than starting the service.");
     }
 }

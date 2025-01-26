@@ -10,8 +10,8 @@ namespace Invoicing.API.Features.Invoices.CreateInvoices;
 
 public sealed class CreateInvoicesCommandHandler(
     InvoicingDbContext context,
-    IValidator<CreateInvoicesCommand> validator)
-    : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesResponse>>
+    IValidator<CreateInvoicesCommand> validator
+) : IRequestHandler<CreateInvoicesCommand, HttpResult<CreateInvoicesResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];
     private readonly List<SuccessfulInvoice> _successfulInvoices = [];
@@ -26,14 +26,13 @@ public sealed class CreateInvoicesCommandHandler(
             return result.WithValidationErrors(validationResult.Errors);
 
         var operations = await GetOperations(request.Year, request.Month);
-        foreach (var clientGroup in operations.GroupBy(o => o.ClientId))
+        foreach (var clientOperationsGroup in operations.GroupBy(o => o.ClientId))
         {
-            var clientId = clientGroup.Key;
             var isClientAlreadyInvoiced = await IsClientAlreadyInvoicedAsync(
-                clientId, request.Year, request.Month, clientGroup, cancellationToken
+                request.Year, request.Month, clientOperationsGroup, cancellationToken
             );
             if (isClientAlreadyInvoiced) continue;
-            ProcessClient(clientGroup);
+            ProcessClient(clientOperationsGroup);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -43,33 +42,32 @@ public sealed class CreateInvoicesCommandHandler(
 
     private async Task<IEnumerable<Operation>> GetOperations(int year, int month)
     {
-        return await context.Operations
+        return await context.Operations // TODO: process one client at a time
             .Where(o => o.Date.Year == year && o.Date.Month == month)
-            .OrderBy(o => o.ServiceId).ThenBy(o => o.Date)
+            .OrderBy(o => o.Date)
             .ToListAsync();
     }
 
     private async Task<bool> IsClientAlreadyInvoicedAsync(
-        string clientId,
         int year,
-        int month,
-        IGrouping<string, Operation> clientGroup,
+        int month, // TODO refactor
+        IGrouping<string, Operation> clientOperationsGroup,
         CancellationToken cancellationToken)
     {
+        var clientId = clientOperationsGroup.Key;
         var existingInvoice = await context.Invoices
             .Include(i => i.Items)
             .Where(i => i.ClientId == clientId)
-            .Where(i => i.CreatedAt.Year == year && i.CreatedAt.Month == month)
+            .Where(i => i.Year == year && i.Month == month)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existingInvoice == null) return false;
 
-        var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientGroup, existingInvoice);
+        var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientOperationsGroup, existingInvoice);
         if (!areAllOperationsInvoiced)
         {
             LogFailedInvoice(
-                clientId,
-                "Client has operations that are not invoiced, but an invoice already exists."
+                clientId, "Client has operations that are not invoiced, but an invoice already exists."
             );
         }
 
@@ -88,10 +86,10 @@ public sealed class CreateInvoicesCommandHandler(
             );
     }
 
-    private void ProcessClient(IGrouping<string, Operation> clientGroup)
+    private void ProcessClient(IGrouping<string, Operation> clientOperationsGroup)
     {
-        var clientId = clientGroup.Key;
-        var firstOperation = clientGroup.First();
+        var clientId = clientOperationsGroup.Key;
+        var firstOperation = clientOperationsGroup.First();
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
@@ -100,30 +98,26 @@ public sealed class CreateInvoicesCommandHandler(
             Year = firstOperation.Date.Year,
             Month = firstOperation.Date.Month
         };
-        foreach (var serviceGroup in clientGroup.GroupBy(o => o.ServiceId))
+        foreach (var serviceOperationsGroup in clientOperationsGroup.GroupBy(o => o.ServiceId))
         {
-            var processServiceGroupResult = ProcessService(invoice, serviceGroup, clientId);
+            var processServiceGroupResult = ProcessService(serviceOperationsGroup.ToList(), invoice, clientId);
             if (processServiceGroupResult.IsError) return;
         }
 
         AddInvoiceIfNotEmpty(invoice, clientId);
     }
 
-    private CommonResult<Unit> ProcessService(
-        Invoice invoice,
-        IGrouping<string, Operation> serviceGroup, // TODO: probably change to List<Operation> but check what it contains
-        string clientId)
+    private CommonResult<Unit> ProcessService(IList<Operation> serviceOperations, Invoice invoice, string clientId)
     {
         var result = new CommonResult<Unit>();
-        var isLastOperationValid = IsLastOperationValid(serviceGroup.LastOrDefault(), clientId);
+        var isLastOperationValid = IsLastOperationValid(serviceOperations.LastOrDefault(), clientId);
         if (!isLastOperationValid)
             return result.WithError("The last operation for this service is not an end service.");
 
-        InvoiceItem? currentItem = null;
-        // TODO: and then below use Linq instead of foreach
-        foreach (var operation in serviceGroup)
+        foreach (var operations in serviceOperations.Chunk(2))
         {
-            ProcessOperation(operation, invoice, ref currentItem);
+            var invoiceItem = CreateInvoiceItem(operations[0], operations[1]);
+            invoice.Items.Add(invoiceItem);
         }
 
         return result;
@@ -135,39 +129,30 @@ public sealed class CreateInvoicesCommandHandler(
             return true;
 
         LogFailedInvoice(
-            clientId,
-            $"The last operation for {lastOperation.ServiceId} service is not {OperationType.EndService}."
+            clientId, $"The last operation for {lastOperation.ServiceId} service is not {OperationType.EndService}."
         );
         return false;
     }
 
-    private void ProcessOperation(Operation operation, Invoice invoice, ref InvoiceItem? currentItem)
+    private InvoiceItem CreateInvoiceItem(Operation beginOperation, Operation endOperation)
     {
-        if (operation.Type is OperationType.StartService or OperationType.ResumeService)
+        var invoiceItem = new InvoiceItem
         {
-            currentItem = new InvoiceItem
-            {
-                ServiceId = operation.ServiceId,
-                StartDate = operation.Date,
-                IsSuspended = false
-            };
-        }
-        else if (operation.Type is OperationType.SuspendService or OperationType.EndService && currentItem != null)
-        {
-            currentItem.EndDate = operation.Date;
-            currentItem.Value = CalculateInvoiceItemValue(currentItem, operation);
-            currentItem.IsSuspended = operation.Type == OperationType.SuspendService;
-            invoice.Items.Add(currentItem);
-            currentItem = null;
-        }
+            ServiceId = beginOperation.ServiceId,
+            StartDate = beginOperation.Date,
+            EndDate = endOperation.Date,
+            IsSuspended = endOperation.Type == OperationType.SuspendService,
+            Value = CalculateInvoiceItemValue(beginOperation, endOperation)
+        };
+        return invoiceItem;
     }
 
-    private decimal CalculateInvoiceItemValue(InvoiceItem item, Operation operation)
+    private decimal CalculateInvoiceItemValue(Operation beginOperation, Operation endOperation)
     {
-        var startDate = item.StartDate.ToDateTime(TimeOnly.MinValue);
-        var endDate = item.EndDate.ToDateTime(TimeOnly.MinValue);
+        var startDate = beginOperation.Date.ToDateTime(TimeOnly.MinValue);
+        var endDate = endOperation.Date.ToDateTime(TimeOnly.MinValue);
         var days = (endDate - startDate).Days;
-        return operation.PricePerDay * operation.Quantity * days;
+        return beginOperation.PricePerDay * beginOperation.Quantity * days;
     }
 
     private void AddInvoiceIfNotEmpty(Invoice invoice, string clientId)
