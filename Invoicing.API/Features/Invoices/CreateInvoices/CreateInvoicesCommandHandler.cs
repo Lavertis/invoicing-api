@@ -26,8 +26,12 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
             var existingInvoice = await GetExistingInvoiceAsync(clientId, request.Year, request.Month);
             if (existingInvoice != null)
             {
-                ValidateAllClientOperationsAreInvoiced(clientOperations, existingInvoice);
-                continue;
+                var areAllOperationsInvoicedResult = VerifyAllOperationsAreInvoiced(existingInvoice, clientOperations);
+                if (areAllOperationsInvoicedResult is { Value: false, IsError: true })
+                {
+                    LogFailedInvoice(clientId, areAllOperationsInvoicedResult.ErrorMessage);
+                    continue;
+                }
             }
 
             var createInvoiceResult = CreateInvoiceForClient(clientOperations);
@@ -56,6 +60,31 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
             .ToListAsync();
     }
 
+    private CommonResult<bool> VerifyAllOperationsAreInvoiced(
+        Invoice invoice,
+        IList<ServiceProvisionOperation> clientOperations)
+    {
+        var result = new CommonResult<bool>();
+        var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientOperations, invoice);
+        return areAllOperationsInvoiced
+            ? result.WithValue(true)
+            : result
+                .WithValue(false)
+                .WithError("Client has operations that are not invoiced, but an invoice already exists.");
+    }
+
+    private bool AreAllOperationsInvoiced(IEnumerable<ServiceProvisionOperation> operations, Invoice invoice)
+    {
+        return operations
+            .All(operation => invoice.Items
+                .Any(item =>
+                    item.ServiceId == operation.ServiceProvision.ServiceId &&
+                    item.StartDate <= operation.Date &&
+                    item.EndDate >= operation.Date
+                )
+            );
+    }
+
     private async Task<Invoice?> GetExistingInvoiceAsync(string clientId, int year, int month)
     {
         return await context.Invoices
@@ -74,28 +103,6 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
             .ToListAsync();
     }
 
-    private void ValidateAllClientOperationsAreInvoiced(IList<ServiceProvisionOperation> operations, Invoice invoice)
-    {
-        var areAllOperationsInvoiced = AreAllOperationsInvoiced(operations, invoice);
-        if (!areAllOperationsInvoiced)
-        {
-            LogFailedInvoice(
-                invoice.ClientId, "Client has operations that are not invoiced, but an invoice already exists."
-            );
-        }
-    }
-
-    private bool AreAllOperationsInvoiced(IEnumerable<ServiceProvisionOperation> operations, Invoice invoice)
-    {
-        return operations
-            .All(operation => invoice.Items
-                .Any(item =>
-                    item.ServiceId == operation.ServiceProvision.ServiceId &&
-                    item.StartDate <= operation.Date &&
-                    item.EndDate >= operation.Date
-                )
-            );
-    }
 
     private CommonResult<Invoice?> CreateInvoiceForClient(IList<ServiceProvisionOperation> operations)
     {
@@ -113,12 +120,12 @@ public sealed class CreateInvoicesCommandHandler(InvoicingDbContext context)
 
         foreach (var serviceOperationsGroup in operations.GroupBy(o => o.ServiceProvision.ServiceId))
         {
-            if (operations.Last().Type != OperationType.EndService)
+            if (serviceOperationsGroup.Last().Type != OperationType.EndService)
             {
-                var errorMsg = $"The last operation for client {clientId} for service " +
-                               $"{serviceOperationsGroup.Key} is not {OperationType.EndService}.";
-                LogFailedInvoice(clientId, errorMsg);
-                return result.WithError(errorMsg);
+                return result.WithError(
+                    $"The last operation for client {clientId} for service " +
+                    $"{serviceOperationsGroup.Key} is not {OperationType.EndService}."
+                );
             }
 
             var invoiceItems = CreateInvoiceItemsForService(serviceOperationsGroup);
