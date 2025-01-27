@@ -157,4 +157,107 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         result.Value.SuccessfulInvoices.Should().BeEmpty();
         result.Value.FailedInvoices.Should().HaveCount(1);
     }
+
+    [Fact]
+    public async Task Handle_ShouldCreateInvoices_ForMultipleClients()
+    {
+        // Arrange
+        const int year = 2023;
+        const int month = 2;
+        var command = new GenerateInvoicesCommand { Month = month, Year = year };
+        var cancellationToken = CancellationToken.None;
+
+        // Seed data for client1
+        const string client1Id = "client1";
+        var serviceProvision1 = new ServiceProvision
+            { ClientId = client1Id, ServiceId = "service1", PricePerDay = 10, Quantity = 2 };
+        var operations1 = new List<ServiceOperation>
+        {
+            new()
+            {
+                ServiceProvision = serviceProvision1, Date = new DateOnly(year, month, 1),
+                Type = ServiceOperationType.Start
+            },
+            new()
+            {
+                ServiceProvision = serviceProvision1, Date = new DateOnly(year, month, 3),
+                Type = ServiceOperationType.Suspend
+            },
+            new()
+            {
+                ServiceProvision = serviceProvision1, Date = new DateOnly(year, month, 5),
+                Type = ServiceOperationType.Resume
+            },
+            new()
+            {
+                ServiceProvision = serviceProvision1, Date = new DateOnly(year, month, 20),
+                Type = ServiceOperationType.End
+            }
+        };
+
+        // Seed data for client2
+        const string client2Id = "client2";
+        var serviceProvision2 = new ServiceProvision
+            { ClientId = client2Id, ServiceId = "service2", PricePerDay = 15, Quantity = 1 };
+        var operations2 = new List<ServiceOperation>
+        {
+            new()
+            {
+                ServiceProvision = serviceProvision2, Date = new DateOnly(year, month, 2),
+                Type = ServiceOperationType.Start
+            },
+            new()
+            {
+                ServiceProvision = serviceProvision2, Date = new DateOnly(year, month, 10),
+                Type = ServiceOperationType.End
+            }
+        };
+
+        Context.ServiceOperations.AddRange(operations1);
+        Context.ServiceOperations.AddRange(operations2);
+        await Context.SaveChangesAsync(cancellationToken);
+
+        // Act
+        var result = await _handler.Handle(command, cancellationToken);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Value.Should().NotBeNull();
+        result.Value.SuccessfulInvoices.Should().HaveCount(2);
+        result.Value.FailedInvoices.Should().BeEmpty();
+
+        var invoiceCount = await Context.Invoices.CountAsync(cancellationToken);
+        invoiceCount.Should().Be(2);
+
+        var invoices = await Context.Invoices.Include(i => i.Items).ToListAsync(cancellationToken);
+
+        var invoice1 = invoices.First(i => i.ClientId == client1Id);
+        invoice1.Month.Should().Be(month);
+        invoice1.Year.Should().Be(year);
+        invoice1.Items.Should().HaveCount(2);
+
+        var firstItem1 = invoice1.Items[0];
+        firstItem1.ServiceId.Should().Be(serviceProvision1.ServiceId);
+        firstItem1.StartDate.Should().Be(operations1[0].Date);
+        firstItem1.EndDate.Should().Be(operations1[1].Date);
+        firstItem1.Value.Should().Be(40);
+
+        var secondItem1 = invoice1.Items[1];
+        secondItem1.ServiceId.Should().Be(serviceProvision1.ServiceId);
+        secondItem1.StartDate.Should().Be(operations1[2].Date);
+        secondItem1.EndDate.Should().Be(operations1[3].Date);
+        secondItem1.Value.Should().Be(300);
+
+        var invoice2 = invoices.First(i => i.ClientId == client2Id);
+        invoice2.Month.Should().Be(month);
+        invoice2.Year.Should().Be(year);
+        invoice2.Items.Should().HaveCount(1);
+
+        var firstItem2 = invoice2.Items[0];
+        firstItem2.ServiceId.Should().Be(serviceProvision2.ServiceId);
+        firstItem2.StartDate.Should().Be(operations2[0].Date);
+        firstItem2.EndDate.Should().Be(operations2[1].Date);
+        firstItem2.Value.Should().Be(120);
+    }
 }
