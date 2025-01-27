@@ -1,9 +1,9 @@
 using System.Reflection;
 using Mapster;
 
-namespace Invoicing.API.Mapping;
+namespace Invoicing.API.Config;
 
-public static class MapsterModule
+public static class MapsterConfig
 {
     public static void AddMapsterModule(this IServiceCollection services)
     {

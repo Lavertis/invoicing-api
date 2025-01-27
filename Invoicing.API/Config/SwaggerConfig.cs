@@ -1,6 +1,6 @@
-namespace Invoicing.API.Extensions;
+namespace Invoicing.API.Config;
 
-public static class SwaggerExtensions
+public static class SwaggerConfig
 {
     public static void UseSwaggerDocumentation(this WebApplication app)
     {

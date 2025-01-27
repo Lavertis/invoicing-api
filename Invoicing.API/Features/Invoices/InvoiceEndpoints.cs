@@ -1,3 +1,4 @@
+using Carter;
 using Invoicing.API.Dto.Common;
 using Invoicing.API.Extensions;
 using Invoicing.API.Features.Invoices.GenerateInvoices;
@@ -6,14 +7,13 @@ using Invoicing.API.Features.Invoices.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Invoicing.API.Endpoints.Routes;
+namespace Invoicing.API.Features.Invoices;
 
-public static class InvoiceEndpoints
+public class InvoiceEndpoints : ICarterModule
 {
-    public static WebApplication MapInvoiceEndpoints(this WebApplication app)
+    public void AddRoutes(IEndpointRouteBuilder app)
     {
         var root = app.MapGroup("/api/invoices")
-            // .AddEndpointFilterFactory(ValidationFilter.ValidationFilterFactory)
             .WithTags("Invoice")
             .WithOpenApi();
 
@@ -30,8 +30,6 @@ public static class InvoiceEndpoints
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithSummary("Retrieves a list of invoices.")
             .WithDescription("Returns a paginated list of invoices.");
-
-        return app;
     }
 
     private static async Task<IResult> GenerateInvoices(

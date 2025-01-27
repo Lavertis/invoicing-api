@@ -1,6 +1,5 @@
-using Invoicing.API.Endpoints;
-using Invoicing.API.Extensions;
-using Invoicing.API.Mapping;
+using Carter;
+using Invoicing.API.Config;
 using Invoicing.API.Mediator;
 using Invoicing.API.Middleware;
 using Invoicing.Infrastructure.Database;
@@ -13,6 +12,7 @@ builder.Services.AddMiddlewareModule();
 builder.Services.AddMapsterModule();
 builder.Services.AddFluentValidators();
 builder.Services.AddMediatorModule();
+builder.Services.AddCarter();
 
 var app = builder.Build();
 
@@ -23,5 +23,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
-app.MapEndpoints();
+app.MapCarter();
 await app.RunAsync();
