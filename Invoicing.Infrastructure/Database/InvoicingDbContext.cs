@@ -5,7 +5,7 @@ namespace Invoicing.Infrastructure.Database;
 
 public class InvoicingDbContext(DbContextOptions<InvoicingDbContext> options) : DbContext(options)
 {
-    public DbSet<ServiceProvisionOperation> ServiceProvisionOperations { get; set; }
+    public DbSet<ServiceOperation> ServiceOperations { get; set; }
     public DbSet<ServiceProvision> ServiceProvisions { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
 

@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 namespace Invoicing.Domain.Enums;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum OperationType
+public enum ServiceOperationType
 {
-    StartService,
-    SuspendService,
-    ResumeService,
-    EndService
+    Start,
+    Suspend,
+    Resume,
+    End
 }

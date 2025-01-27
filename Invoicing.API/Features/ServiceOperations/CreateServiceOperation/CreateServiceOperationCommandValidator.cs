@@ -1,11 +1,11 @@
 using FluentValidation;
 using Invoicing.Domain.Enums;
 
-namespace Invoicing.API.Features.Operations.CreateOperation;
+namespace Invoicing.API.Features.ServiceOperations.CreateServiceOperation;
 
-public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOperationCommand>
+public sealed class CreateServiceOperationCommandValidator : AbstractValidator<CreateServiceOperationCommand>
 {
-    public CreateOperationCommandValidator()
+    public CreateServiceOperationCommandValidator()
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 
@@ -15,12 +15,12 @@ public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOp
 
         RuleFor(x => x.Quantity)
             .NotNull()
-            .When(x => x.Type == OperationType.StartService)
+            .When(x => x.Type == ServiceOperationType.Start)
             .WithMessage("Quantity must be provided for starting the service.");
 
         RuleFor(x => x.Quantity)
             .Null()
-            .When(x => x.Type != OperationType.StartService)
+            .When(x => x.Type != ServiceOperationType.Start)
             .WithMessage("Quantity cannot be provided for operations other than starting the service.");
 
         RuleFor(x => x.PricePerDay)
@@ -30,12 +30,12 @@ public sealed class CreateOperationCommandValidator : AbstractValidator<CreateOp
 
         RuleFor(x => x.PricePerDay)
             .NotNull()
-            .When(x => x.Type == OperationType.StartService)
+            .When(x => x.Type == ServiceOperationType.Start)
             .WithMessage("Price per day must be provided for starting the service.");
 
         RuleFor(x => x.PricePerDay)
             .Null()
-            .When(x => x.Type != OperationType.StartService)
+            .When(x => x.Type != ServiceOperationType.Start)
             .WithMessage("Price per day must cannot be provided for operations other than starting the service.");
     }
 }

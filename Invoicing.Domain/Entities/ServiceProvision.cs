@@ -9,5 +9,5 @@ public sealed class ServiceProvision : BaseEntity
     public required string ClientId { get; set; }
     public required int Quantity { get; set; }
     public required decimal PricePerDay { get; set; }
-    public List<ServiceProvisionOperation> Operations { get; set; } = [];
+    public List<ServiceOperation> Operations { get; set; } = [];
 }

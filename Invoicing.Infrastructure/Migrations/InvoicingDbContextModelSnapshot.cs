@@ -85,6 +85,36 @@ namespace Invoicing.Infrastructure.Migrations
                     b.ToTable("InvoiceItem");
                 });
 
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ServiceProvisionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceProvisionId", "Date")
+                        .IsDescending(false, true);
+
+                    b.ToTable("ServiceOperations");
+                });
+
             modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvision", b =>
                 {
                     b.Property<Guid>("Id")
@@ -118,36 +148,6 @@ namespace Invoicing.Infrastructure.Migrations
                     b.ToTable("ServiceProvisions");
                 });
 
-            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvisionOperation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ServiceProvisionId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceProvisionId", "Date")
-                        .IsDescending(false, true);
-
-                    b.ToTable("ServiceProvisionOperations");
-                });
-
             modelBuilder.Entity("Invoicing.Domain.Entities.InvoiceItem", b =>
                 {
                     b.HasOne("Invoicing.Domain.Entities.Invoice", null)
@@ -157,7 +157,7 @@ namespace Invoicing.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceProvisionOperation", b =>
+            modelBuilder.Entity("Invoicing.Domain.Entities.ServiceOperation", b =>
                 {
                     b.HasOne("Invoicing.Domain.Entities.ServiceProvision", "ServiceProvision")
                         .WithMany("Operations")

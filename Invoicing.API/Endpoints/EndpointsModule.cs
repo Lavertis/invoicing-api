@@ -7,7 +7,7 @@ public static class EndpointsModule
     public static WebApplication MapEndpoints(this WebApplication app)
     {
         return app
-            .MapOperationEndpoints()
+            .MapServiceOperationEndpoints()
             .MapInvoiceEndpoints();
     }
 }

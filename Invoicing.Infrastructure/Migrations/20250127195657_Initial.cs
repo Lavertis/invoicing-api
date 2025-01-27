@@ -49,11 +49,11 @@ namespace Invoicing.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ServiceId = table.Column<string>(type: "TEXT", nullable: false),
                     StartDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     EndDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Value = table.Column<decimal>(type: "TEXT", nullable: false),
                     IsSuspended = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ServiceId = table.Column<string>(type: "TEXT", nullable: false),
                     InvoiceId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -70,7 +70,7 @@ namespace Invoicing.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ServiceProvisionOperations",
+                name: "ServiceOperations",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
@@ -82,9 +82,9 @@ namespace Invoicing.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ServiceProvisionOperations", x => x.Id);
+                    table.PrimaryKey("PK_ServiceOperations", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ServiceProvisionOperations_ServiceProvisions_ServiceProvisionId",
+                        name: "FK_ServiceOperations_ServiceProvisions_ServiceProvisionId",
                         column: x => x.ServiceProvisionId,
                         principalTable: "ServiceProvisions",
                         principalColumn: "Id",
@@ -103,8 +103,8 @@ namespace Invoicing.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ServiceProvisionOperations_ServiceProvisionId_Date",
-                table: "ServiceProvisionOperations",
+                name: "IX_ServiceOperations_ServiceProvisionId_Date",
+                table: "ServiceOperations",
                 columns: new[] { "ServiceProvisionId", "Date" },
                 descending: new[] { false, true });
 
@@ -121,7 +121,7 @@ namespace Invoicing.Infrastructure.Migrations
                 name: "InvoiceItem");
 
             migrationBuilder.DropTable(
-                name: "ServiceProvisionOperations");
+                name: "ServiceOperations");
 
             migrationBuilder.DropTable(
                 name: "Invoices");
