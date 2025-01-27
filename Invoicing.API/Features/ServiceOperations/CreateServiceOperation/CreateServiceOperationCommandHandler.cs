@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.ServiceOperations.CreateServiceOperation;
 
-public sealed class CreateServiceOperationCommandHandler(InvoicingDbContext context)
+public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext context)
     : IRequestHandler<CreateServiceOperationCommand, HttpResult<IdResponse<Guid>>>
 {
     public async Task<HttpResult<IdResponse<Guid>>> Handle(

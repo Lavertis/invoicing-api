@@ -5,16 +5,16 @@ namespace Invoicing.Tests;
 
 public class BaseTest : IDisposable, IAsyncDisposable
 {
-    protected readonly InvoicingDbContext Context;
+    protected readonly ApplicationDbContext Context;
     private bool _disposed;
 
     protected BaseTest()
     {
-        var options = new DbContextOptionsBuilder<InvoicingDbContext>()
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        Context = new InvoicingDbContext(options);
+        Context = new ApplicationDbContext(options);
         Context.Database.EnsureCreated();
     }
 

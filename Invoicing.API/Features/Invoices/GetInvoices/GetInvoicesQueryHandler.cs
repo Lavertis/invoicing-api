@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.GetInvoices;
 
-public sealed class GetInvoicesQueryHandler(InvoicingDbContext context)
+public sealed class GetInvoicesQueryHandler(ApplicationDbContext context)
     : IRequestHandler<GetInvoicesQuery, HttpResult<PaginatedResponse<InvoiceResponse>>>
 {
     public async Task<HttpResult<PaginatedResponse<InvoiceResponse>>> Handle(

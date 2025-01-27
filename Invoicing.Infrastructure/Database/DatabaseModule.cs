@@ -10,7 +10,7 @@ public static class DatabaseModule
 {
     public static void AddDatabaseModule(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<InvoicingDbContext>(options => options.UseSqlite(
+        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(
             GetConnectionString(configuration),
             x => x.MigrationsAssembly(Assembly.GetExecutingAssembly())
         ));
@@ -18,9 +18,9 @@ public static class DatabaseModule
 
     private static string GetConnectionString(IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("InvoicingDB");
+        var connectionString = configuration.GetConnectionString("Database");
         if (connectionString == null)
-            throw new ConfigurationException("Cannot get InvoicingDB connection string");
+            throw new ConfigurationException("Cannot get Database connection string from configuration.");
         return connectionString;
     }
 }

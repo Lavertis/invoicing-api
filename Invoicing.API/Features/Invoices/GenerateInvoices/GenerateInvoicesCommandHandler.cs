@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.API.Features.Invoices.GenerateInvoices;
 
-public sealed class GenerateInvoicesCommandHandler(InvoicingDbContext context)
+public sealed class GenerateInvoicesCommandHandler(ApplicationDbContext context)
     : IRequestHandler<GenerateInvoicesCommand, HttpResult<GenerateInvoicesCommandResponse>>
 {
     private readonly List<FailedInvoice> _failedInvoices = [];

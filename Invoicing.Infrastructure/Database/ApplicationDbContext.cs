@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invoicing.Infrastructure.Database;
 
-public class InvoicingDbContext(DbContextOptions<InvoicingDbContext> options) : DbContext(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     public DbSet<ServiceOperation> ServiceOperations { get; set; }
     public DbSet<ServiceProvision> ServiceProvisions { get; set; }

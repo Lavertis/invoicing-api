@@ -1,5 +1,6 @@
 using Carter;
 using Invoicing.API.Config;
+using Invoicing.API.Extensions;
 using Invoicing.API.Mediator;
 using Invoicing.API.Middleware;
 using Invoicing.Infrastructure.Database;
@@ -19,6 +20,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerDocumentation();
+    await app.ApplyMigrationsAsync<ApplicationDbContext>();
 }
 
 app.UseHttpsRedirection();
