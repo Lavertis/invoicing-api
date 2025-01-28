@@ -16,7 +16,7 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnBadRequest_WhenDateIsBeforeLastServiceOperationDate()
+    public async Task ReturnsBadRequest_WhenDateIsBeforeLastServiceOperationDate()
     {
         // Arrange
         const string clientId = "client1";
@@ -76,7 +76,7 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
     [InlineData(null, ServiceOperationType.Suspend, false)]
     [InlineData(null, ServiceOperationType.Resume, false)]
     [InlineData(null, ServiceOperationType.End, false)]
-    public async Task Handle_ShouldValidateOperationTransition(
+    public async Task ValidatesOperationTransitionCorrectly(
         ServiceOperationType? lastOperationType,
         ServiceOperationType nextOperationType,
         bool isValid)
@@ -129,5 +129,47 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
             result.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
             result.IsError.ShouldBeTrue();
         }
+    }
+
+    [Fact]
+    public async Task CreatesServiceOperation_ForValidData()
+    {
+        // Arrange
+        const string clientId = "client1";
+        const string serviceId = "service1";
+        var lastOperation = new ServiceOperation
+        {
+            Id = Guid.NewGuid(),
+            ServiceProvision = new ServiceProvision
+            {
+                ClientId = clientId,
+                ServiceId = serviceId,
+                Quantity = 10,
+                PricePerDay = 100
+            },
+            Date = DateOnly.FromDateTime(DateTime.UtcNow),
+            Type = ServiceOperationType.Start
+        };
+        Context.ServiceOperations.Add(lastOperation);
+        await Context.SaveChangesAsync();
+
+        var command = new CreateServiceOperationCommand
+        {
+            ServiceId = serviceId,
+            ClientId = clientId,
+            Quantity = 10,
+            PricePerDay = 100,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            Type = ServiceOperationType.Suspend
+        };
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.StatusCode.ShouldBe(StatusCodes.Status201Created);
+        result.Value.ShouldNotBeNull();
+        result.IsSuccess.ShouldBeTrue();
+        Context.ServiceOperations.Count().ShouldBe(2);
     }
 }

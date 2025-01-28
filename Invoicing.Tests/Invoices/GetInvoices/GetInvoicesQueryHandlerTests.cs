@@ -14,7 +14,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnInvoices_WhenInvoicesExist()
+    public async Task ReturnsInvoices_WhenInvoicesExist()
     {
         // Arrange
         const string clientId = "client1";
@@ -23,7 +23,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
             Id = Guid.NewGuid(),
             ClientId = clientId,
             Month = 1,
-            Year = 2023,
+            Year = 2025,
             CreatedAt = DateTime.UtcNow,
             Items =
             [
@@ -45,7 +45,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         {
             ClientId = clientId,
             Month = 1,
-            Year = 2023,
+            Year = 2025,
             Page = 1,
             PageSize = 10
         };
@@ -61,14 +61,14 @@ public class GetInvoicesQueryHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnEmpty_WhenNoInvoicesExist()
+    public async Task ReturnsEmptyList_WhenNoInvoiceExists()
     {
         // Arrange
         var query = new GetInvoicesQuery
         {
             ClientId = "client1",
             Month = 1,
-            Year = 2023,
+            Year = 2025,
             Page = 1,
             PageSize = 10
         };
@@ -82,7 +82,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnPaginatedInvoices_WhenMultipleInvoicesExist()
+    public async Task ReturnsPaginatedInvoices_WhenPageSizeLessThanTotalInvoices()
     {
         // Arrange
         const string clientId = "client1";
@@ -93,7 +93,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
                 Id = Guid.NewGuid(),
                 ClientId = clientId,
                 Month = 1,
-                Year = 2023,
+                Year = 2025,
                 CreatedAt = DateTime.UtcNow,
                 Items =
                 [
@@ -117,7 +117,7 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         {
             ClientId = clientId,
             Month = 1,
-            Year = 2023,
+            Year = 2025,
             Page = 1,
             PageSize = 10
         };

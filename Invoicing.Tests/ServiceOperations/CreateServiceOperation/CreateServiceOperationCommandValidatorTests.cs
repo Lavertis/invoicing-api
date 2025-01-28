@@ -31,9 +31,11 @@ namespace Invoicing.Tests.ServiceOperations.CreateServiceOperation
         [InlineData(1, 100.0, ServiceOperationType.End, false)] // Unnecessary quantity and price
         [InlineData(null, 100.0, ServiceOperationType.End, false)] // Unnecessary price
         [InlineData(1, null, ServiceOperationType.End, false)] // Unnecessary quantity
-        public void Validate_CreateOperationCommand_ShouldValidateCorrectly(
-            int? quantity, double? pricePerDay, ServiceOperationType type, bool expectedIsValid
-        )
+        public void ValidatesCorrectly(
+            int? quantity,
+            double? pricePerDay,
+            ServiceOperationType type,
+            bool expectedIsValid)
         {
             // Arrange
             var command = new CreateServiceOperationCommand

@@ -17,13 +17,12 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldCreateInvoice_ForFinishedProvision()
+    public async Task CreatesInvoice_WhenProvisionIsFinished()
     {
         // Arrange
-        const int year = 2023;
+        const int year = 2025;
         const int month = 2;
         var command = new GenerateInvoicesCommand { Month = 2, Year = year };
-        var cancellationToken = CancellationToken.None;
 
         // Seed data
         const string clientId = "client1";
@@ -53,10 +52,10 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
             }
         };
         Context.ServiceOperations.AddRange(operations);
-        await Context.SaveChangesAsync(cancellationToken);
+        await Context.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var result = await _handler.Handle(command, cancellationToken);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -65,10 +64,10 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         result.Value.SuccessfulInvoices.Count.ShouldBe(1);
         result.Value.FailedInvoices.ShouldBeEmpty();
 
-        var invoiceCount = await Context.Invoices.CountAsync(cancellationToken);
+        var invoiceCount = await Context.Invoices.CountAsync(CancellationToken.None);
         invoiceCount.ShouldBe(1);
 
-        var invoice = await Context.Invoices.Include(i => i.Items).FirstAsync(cancellationToken);
+        var invoice = await Context.Invoices.Include(i => i.Items).FirstAsync(CancellationToken.None);
         invoice.ClientId.ShouldBe(clientId);
         invoice.Month.ShouldBe(month);
         invoice.Year.ShouldBe(year);
@@ -88,11 +87,10 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnFailure_WhenProvisionNotFinished()
+    public async Task ReturnsFailure_WhenProvisionIsNotFinished()
     {
         // Arrange
-        var command = new GenerateInvoicesCommand { Month = 1, Year = 2023 };
-        var cancellationToken = CancellationToken.None;
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2025 };
 
         // Seed data
         const string clientId = "client1";
@@ -102,15 +100,15 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         {
             new()
             {
-                ServiceProvision = serviceProvision, Date = new DateOnly(2023, 1, 1), Type = ServiceOperationType.Start
+                ServiceProvision = serviceProvision, Date = new DateOnly(2025, 1, 1), Type = ServiceOperationType.Start
             }
             // Missing EndService operation
         };
         Context.ServiceOperations.AddRange(operations);
-        await Context.SaveChangesAsync(cancellationToken);
+        await Context.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var result = await _handler.Handle(command, cancellationToken);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -118,14 +116,14 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         result.Value.ShouldNotBeNull();
         result.Value.SuccessfulInvoices.ShouldBeEmpty();
         result.Value.FailedInvoices.Count.ShouldBe(1);
+        Context.Invoices.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnFailedInvoice_WhenInvoiceAndNonInvoicedOperationsExist()
+    public async Task ReturnsFailedInvoice_WhenInvoiceAndNonInvoicedOperationsExist()
     {
         // Arrange
-        var command = new GenerateInvoicesCommand { Month = 1, Year = 2023 };
-        var cancellationToken = CancellationToken.None;
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2025 };
 
         // Seed data
         const string clientId = "client1";
@@ -135,20 +133,20 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         {
             new()
             {
-                ServiceProvision = serviceProvision, Date = new DateOnly(2023, 1, 1), Type = ServiceOperationType.Start
+                ServiceProvision = serviceProvision, Date = new DateOnly(2025, 1, 1), Type = ServiceOperationType.Start
             },
             new()
             {
-                ServiceProvision = serviceProvision, Date = new DateOnly(2023, 1, 31), Type = ServiceOperationType.End
+                ServiceProvision = serviceProvision, Date = new DateOnly(2025, 1, 31), Type = ServiceOperationType.End
             }
         };
         Context.ServiceOperations.AddRange(operations);
-        var invoice = new Invoice { ClientId = clientId, Month = 1, Year = 2023 };
+        var invoice = new Invoice { ClientId = clientId, Month = 1, Year = 2025 };
         Context.Invoices.Add(invoice);
-        await Context.SaveChangesAsync(cancellationToken);
+        await Context.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var result = await _handler.Handle(command, cancellationToken);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -156,16 +154,16 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         result.Value.ShouldNotBeNull();
         result.Value.SuccessfulInvoices.ShouldBeEmpty();
         result.Value.FailedInvoices.Count.ShouldBe(1);
+        (await Context.Invoices.CountAsync(CancellationToken.None)).ShouldBe(1);
     }
 
     [Fact]
-    public async Task Handle_ShouldCreateInvoices_ForMultipleClients()
+    public async Task CreatesSeparateInvoices_WhenMultipleClientsHaveFinishedOperations()
     {
         // Arrange
-        const int year = 2023;
+        const int year = 2025;
         const int month = 2;
         var command = new GenerateInvoicesCommand { Month = month, Year = year };
-        var cancellationToken = CancellationToken.None;
 
         // Seed data for client1
         const string client1Id = "client1";
@@ -215,10 +213,10 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
 
         Context.ServiceOperations.AddRange(operations1);
         Context.ServiceOperations.AddRange(operations2);
-        await Context.SaveChangesAsync(cancellationToken);
+        await Context.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var result = await _handler.Handle(command, cancellationToken);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -227,10 +225,8 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         result.Value.SuccessfulInvoices.Count.ShouldBe(2);
         result.Value.FailedInvoices.ShouldBeEmpty();
 
-        var invoiceCount = await Context.Invoices.CountAsync(cancellationToken);
-        invoiceCount.ShouldBe(2);
-
-        var invoices = await Context.Invoices.Include(i => i.Items).ToListAsync(cancellationToken);
+        var invoices = await Context.Invoices.Include(i => i.Items).ToListAsync(CancellationToken.None);
+        invoices.Count.ShouldBe(2);
 
         var invoice1 = invoices.First(i => i.ClientId == client1Id);
         invoice1.Month.ShouldBe(month);

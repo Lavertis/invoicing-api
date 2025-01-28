@@ -17,7 +17,7 @@ namespace Invoicing.Tests.Invoices.CreateInvoices
         [InlineData(0, 2021, false)] // Invalid month (less than 1)
         [InlineData(13, 2021, false)] // Invalid month (greater than 12)
         [InlineData(5, 1999, false)] // Invalid year (less than 2000)
-        public void Validate_CreateInvoicesCommand_ShouldValidateCorrectly(int month, int year, bool expectedIsValid)
+        public void ValidatesCorrectly(int month, int year, bool expectedIsValid)
         {
             // Arrange
             var command = new GenerateInvoicesCommand { Month = month, Year = year };
