@@ -1,8 +1,8 @@
-using FluentAssertions;
 using Invoicing.API.Features.ServiceOperations.CreateServiceOperation;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Shouldly;
 
 namespace Invoicing.Tests.ServiceOperations.CreateServiceOperation;
 
@@ -51,8 +51,8 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-        result.IsError.Should().BeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
+        result.IsError.ShouldBeTrue();
     }
 
     [Theory]
@@ -120,14 +120,14 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
         // Assert
         if (isValid)
         {
-            result.StatusCode.Should().Be(StatusCodes.Status201Created);
-            result.Value.Should().NotBeNull();
-            result.IsSuccess.Should().BeTrue();
+            result.StatusCode.ShouldBe(StatusCodes.Status201Created);
+            result.Value.ShouldNotBeNull();
+            result.IsSuccess.ShouldBeTrue();
         }
         else
         {
-            result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-            result.IsError.Should().BeTrue();
+            result.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
+            result.IsError.ShouldBeTrue();
         }
     }
 }

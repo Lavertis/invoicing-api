@@ -1,9 +1,9 @@
-using FluentAssertions;
 using Invoicing.API.Features.Invoices.GenerateInvoices;
 using Invoicing.Domain.Entities;
 using Invoicing.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 
 namespace Invoicing.Tests.Invoices.CreateInvoices;
 
@@ -59,32 +59,32 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.StatusCode.Should().Be(StatusCodes.Status200OK);
-        result.Value.Should().NotBeNull();
-        result.Value.SuccessfulInvoices.Should().HaveCount(1);
-        result.Value.FailedInvoices.Should().BeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        result.Value.ShouldNotBeNull();
+        result.Value.SuccessfulInvoices.Count.ShouldBe(1);
+        result.Value.FailedInvoices.ShouldBeEmpty();
 
         var invoiceCount = await Context.Invoices.CountAsync(cancellationToken);
-        invoiceCount.Should().Be(1);
+        invoiceCount.ShouldBe(1);
 
         var invoice = await Context.Invoices.Include(i => i.Items).FirstAsync(cancellationToken);
-        invoice.ClientId.Should().Be(clientId);
-        invoice.Month.Should().Be(month);
-        invoice.Year.Should().Be(year);
-        invoice.Items.Should().HaveCount(2);
+        invoice.ClientId.ShouldBe(clientId);
+        invoice.Month.ShouldBe(month);
+        invoice.Year.ShouldBe(year);
+        invoice.Items.Count.ShouldBe(2);
 
         var firstItem = invoice.Items[0];
-        firstItem.ServiceId.Should().Be(serviceProvision.ServiceId);
-        firstItem.StartDate.Should().Be(operations[0].Date);
-        firstItem.EndDate.Should().Be(operations[1].Date);
-        firstItem.Value.Should().Be(40);
+        firstItem.ServiceId.ShouldBe(serviceProvision.ServiceId);
+        firstItem.StartDate.ShouldBe(operations[0].Date);
+        firstItem.EndDate.ShouldBe(operations[1].Date);
+        firstItem.Value.ShouldBe(40);
 
         var secondItem = invoice.Items[1];
-        secondItem.ServiceId.Should().Be(serviceProvision.ServiceId);
-        secondItem.StartDate.Should().Be(operations[2].Date);
-        secondItem.EndDate.Should().Be(operations[3].Date);
-        secondItem.Value.Should().Be(300);
+        secondItem.ServiceId.ShouldBe(serviceProvision.ServiceId);
+        secondItem.StartDate.ShouldBe(operations[2].Date);
+        secondItem.EndDate.ShouldBe(operations[3].Date);
+        secondItem.Value.ShouldBe(300);
     }
 
     [Fact]
@@ -113,11 +113,11 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.StatusCode.Should().Be(StatusCodes.Status200OK);
-        result.Value.Should().NotBeNull();
-        result.Value.SuccessfulInvoices.Should().BeEmpty();
-        result.Value.FailedInvoices.Should().HaveCount(1);
+        result.IsSuccess.ShouldBeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        result.Value.ShouldNotBeNull();
+        result.Value.SuccessfulInvoices.ShouldBeEmpty();
+        result.Value.FailedInvoices.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -151,11 +151,11 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.StatusCode.Should().Be(StatusCodes.Status200OK);
-        result.Value.Should().NotBeNull();
-        result.Value.SuccessfulInvoices.Should().BeEmpty();
-        result.Value.FailedInvoices.Should().HaveCount(1);
+        result.IsSuccess.ShouldBeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        result.Value.ShouldNotBeNull();
+        result.Value.SuccessfulInvoices.ShouldBeEmpty();
+        result.Value.FailedInvoices.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -221,43 +221,43 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         var result = await _handler.Handle(command, cancellationToken);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.StatusCode.Should().Be(StatusCodes.Status200OK);
-        result.Value.Should().NotBeNull();
-        result.Value.SuccessfulInvoices.Should().HaveCount(2);
-        result.Value.FailedInvoices.Should().BeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        result.Value.ShouldNotBeNull();
+        result.Value.SuccessfulInvoices.Count.ShouldBe(2);
+        result.Value.FailedInvoices.ShouldBeEmpty();
 
         var invoiceCount = await Context.Invoices.CountAsync(cancellationToken);
-        invoiceCount.Should().Be(2);
+        invoiceCount.ShouldBe(2);
 
         var invoices = await Context.Invoices.Include(i => i.Items).ToListAsync(cancellationToken);
 
         var invoice1 = invoices.First(i => i.ClientId == client1Id);
-        invoice1.Month.Should().Be(month);
-        invoice1.Year.Should().Be(year);
-        invoice1.Items.Should().HaveCount(2);
+        invoice1.Month.ShouldBe(month);
+        invoice1.Year.ShouldBe(year);
+        invoice1.Items.Count.ShouldBe(2);
 
         var firstItem1 = invoice1.Items[0];
-        firstItem1.ServiceId.Should().Be(serviceProvision1.ServiceId);
-        firstItem1.StartDate.Should().Be(operations1[0].Date);
-        firstItem1.EndDate.Should().Be(operations1[1].Date);
-        firstItem1.Value.Should().Be(40);
+        firstItem1.ServiceId.ShouldBe(serviceProvision1.ServiceId);
+        firstItem1.StartDate.ShouldBe(operations1[0].Date);
+        firstItem1.EndDate.ShouldBe(operations1[1].Date);
+        firstItem1.Value.ShouldBe(40);
 
         var secondItem1 = invoice1.Items[1];
-        secondItem1.ServiceId.Should().Be(serviceProvision1.ServiceId);
-        secondItem1.StartDate.Should().Be(operations1[2].Date);
-        secondItem1.EndDate.Should().Be(operations1[3].Date);
-        secondItem1.Value.Should().Be(300);
+        secondItem1.ServiceId.ShouldBe(serviceProvision1.ServiceId);
+        secondItem1.StartDate.ShouldBe(operations1[2].Date);
+        secondItem1.EndDate.ShouldBe(operations1[3].Date);
+        secondItem1.Value.ShouldBe(300);
 
         var invoice2 = invoices.First(i => i.ClientId == client2Id);
-        invoice2.Month.Should().Be(month);
-        invoice2.Year.Should().Be(year);
-        invoice2.Items.Should().HaveCount(1);
+        invoice2.Month.ShouldBe(month);
+        invoice2.Year.ShouldBe(year);
+        invoice2.Items.Count.ShouldBe(1);
 
         var firstItem2 = invoice2.Items[0];
-        firstItem2.ServiceId.Should().Be(serviceProvision2.ServiceId);
-        firstItem2.StartDate.Should().Be(operations2[0].Date);
-        firstItem2.EndDate.Should().Be(operations2[1].Date);
-        firstItem2.Value.Should().Be(120);
+        firstItem2.ServiceId.ShouldBe(serviceProvision2.ServiceId);
+        firstItem2.StartDate.ShouldBe(operations2[0].Date);
+        firstItem2.EndDate.ShouldBe(operations2[1].Date);
+        firstItem2.Value.ShouldBe(120);
     }
 }
