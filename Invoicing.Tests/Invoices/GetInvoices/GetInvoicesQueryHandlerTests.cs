@@ -54,10 +54,10 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Value.ShouldNotBeNull();
-        result.Value.Records.Count.ShouldBe(1);
-        result.Value.Records.First().Id.ShouldBe(invoice.Id);
-        result.Value.Records.First().Items.Count.ShouldBe(1);
+        result.Data.ShouldNotBeNull();
+        result.Data.Records.Count.ShouldBe(1);
+        result.Data.Records.First().Id.ShouldBe(invoice.Id);
+        result.Data.Records.First().Items.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -77,8 +77,8 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Value.ShouldNotBeNull();
-        result.Value.Records.ShouldBeEmpty();
+        result.Data.ShouldNotBeNull();
+        result.Data.Records.ShouldBeEmpty();
     }
 
     [Fact]
@@ -126,9 +126,9 @@ public class GetInvoicesQueryHandlerTests : BaseTest
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Value.ShouldNotBeNull();
-        result.Value.Records.Count.ShouldBe(10);
-        result.Value.TotalCount.ShouldBe(20);
-        result.Value.Records.ShouldAllBe(record => record.Items.Count == 1);
+        result.Data.ShouldNotBeNull();
+        result.Data.Records.Count.ShouldBe(10);
+        result.Data.TotalCount.ShouldBe(20);
+        result.Data.Records.ShouldAllBe(record => record.Items.Count == 1);
     }
 }

@@ -19,7 +19,7 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
 
         var lastOperation = await FetchLastServiceOperation(request, cancellationToken);
         var isOperationValidResult = IsOperationValid(request, lastOperation);
-        if (!isOperationValidResult.Value)
+        if (!isOperationValidResult.Data)
         {
             return result
                 .WithStatusCode(StatusCodes.Status400BadRequest)
@@ -32,7 +32,7 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
         await context.SaveChangesAsync(cancellationToken);
 
         var response = new IdResponse<Guid>(operation.Id);
-        return result.WithValue(response).WithStatusCode(StatusCodes.Status201Created);
+        return result.WithData(response).WithStatusCode(StatusCodes.Status201Created);
     }
 
     private static ServiceOperation CreateServiceProvisionOperation(
@@ -81,7 +81,7 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
         if (lastOperation is not null && lastOperation.Date >= request.Date)
         {
             return new CommonResult<bool>()
-                .WithValue(false)
+                .WithData(false)
                 .WithError("The date of the operation must be greater than the date of the last operation.");
         }
 
@@ -99,7 +99,7 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
             ServiceOperationType.Suspend => ValidateSuspendService(lastOperation, result),
             ServiceOperationType.Resume => ValidateResumeService(lastOperation, result),
             ServiceOperationType.End => ValidateEndService(lastOperation, result),
-            _ => result.WithValue(false).WithError("Unexpected operation type.")
+            _ => result.WithData(false).WithError("Unexpected operation type.")
         };
 
         return result;
@@ -109,9 +109,9 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
         CommonResult<bool> result)
     {
         return lastOperation is null or ServiceOperationType.End
-            ? result.WithValue(true)
+            ? result.WithData(true)
             : result
-                .WithValue(false)
+                .WithData(false)
                 .WithError("Cannot start service because the last operation is not an end service.");
     }
 
@@ -119,9 +119,9 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
         CommonResult<bool> result)
     {
         return lastOperation is ServiceOperationType.Start or ServiceOperationType.Resume
-            ? result.WithValue(true)
+            ? result.WithData(true)
             : result
-                .WithValue(false)
+                .WithData(false)
                 .WithError("Cannot suspend service because the last operation is not a start or resume service.");
     }
 
@@ -129,18 +129,18 @@ public sealed class CreateServiceOperationCommandHandler(ApplicationDbContext co
         CommonResult<bool> result)
     {
         return lastOperation == ServiceOperationType.Suspend
-            ? result.WithValue(true)
+            ? result.WithData(true)
             : result
-                .WithValue(false)
+                .WithData(false)
                 .WithError("Cannot resume service because the last operation is not a suspend service.");
     }
 
     private static CommonResult<bool> ValidateEndService(ServiceOperationType? lastOperation, CommonResult<bool> result)
     {
         return lastOperation is ServiceOperationType.Start or ServiceOperationType.Resume
-            ? result.WithValue(true)
+            ? result.WithData(true)
             : result
-                .WithValue(false)
+                .WithData(false)
                 .WithError("Cannot end service because the last operation is not a start or resume service.");
     }
 }

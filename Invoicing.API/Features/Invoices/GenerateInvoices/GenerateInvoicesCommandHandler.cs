@@ -22,31 +22,38 @@ public sealed class GenerateInvoicesCommandHandler(ApplicationDbContext context)
         var clientIds = await GetClientIdsWithOperations(request.Year, request.Month);
         foreach (var clientId in clientIds)
         {
-            var clientOperations = await GetOperationsForClient(clientId, request.Year, request.Month);
-            var existingInvoice = await GetExistingInvoiceAsync(clientId, request.Year, request.Month);
-            if (existingInvoice != null)
-            {
-                var areAllOperationsInvoicedResult = VerifyAllOperationsAreInvoiced(existingInvoice, clientOperations);
-                if (areAllOperationsInvoicedResult is { Value: false, IsError: true })
-                    LogFailedInvoice(clientId, areAllOperationsInvoicedResult.ErrorMessage);
-                continue;
-            }
-
-            var createInvoiceResult = CreateInvoiceForClient(clientOperations);
-            if (createInvoiceResult.IsError)
-            {
+            var createInvoiceResult = await CreateInvoice(request, clientId);
+            if (createInvoiceResult.Data != null)
+                LogSuccessfulInvoice(createInvoiceResult.Data.Value, clientId);
+            else if (createInvoiceResult.IsError)
                 LogFailedInvoice(clientId, createInvoiceResult.ErrorMessage);
-                continue;
-            }
-
-            var invoice = createInvoiceResult.Value!;
-            context.Invoices.Add(invoice);
-            LogSuccessfulInvoice(invoice.Id, invoice.ClientId);
         }
 
         await context.SaveChangesAsync(cancellationToken);
         var response = new GenerateInvoicesCommandResponse(_successfulInvoices, _failedInvoices);
-        return result.WithValue(response).WithStatusCode(StatusCodes.Status200OK);
+        return result.WithData(response).WithStatusCode(StatusCodes.Status200OK);
+    }
+
+    private async Task<CommonResult<Guid?>> CreateInvoice(GenerateInvoicesCommand request, string clientId)
+    {
+        var result = new CommonResult<Guid?>();
+        var clientOperations = await GetOperationsForClient(clientId, request.Year, request.Month);
+        var existingInvoice = await GetExistingInvoiceAsync(clientId, request.Year, request.Month);
+        if (existingInvoice != null)
+        {
+            var areAllOperationsInvoicedResult = VerifyAllOperationsAreInvoiced(existingInvoice, clientOperations);
+            if (areAllOperationsInvoicedResult is { Data: false, IsError: true })
+                return result.WithError(areAllOperationsInvoicedResult.ErrorMessage);
+            return result;
+        }
+
+        var createInvoiceResult = CreateInvoiceForClient(clientOperations);
+        if (createInvoiceResult.IsError)
+            return result.WithError(createInvoiceResult.ErrorMessage);
+
+        var invoice = createInvoiceResult.Data!;
+        context.Invoices.Add(invoice);
+        return result.WithData(invoice.Id);
     }
 
     private async Task<List<string>> GetClientIdsWithOperations(int year, int month)
@@ -65,9 +72,9 @@ public sealed class GenerateInvoicesCommandHandler(ApplicationDbContext context)
         var result = new CommonResult<bool>();
         var areAllOperationsInvoiced = AreAllOperationsInvoiced(clientOperations, invoice);
         return areAllOperationsInvoiced
-            ? result.WithValue(true)
+            ? result.WithData(true)
             : result
-                .WithValue(false)
+                .WithData(false)
                 .WithError("Client has operations that are not invoiced, but an invoice already exists.");
     }
 
@@ -124,7 +131,7 @@ public sealed class GenerateInvoicesCommandHandler(ApplicationDbContext context)
 
         return invoice.Items.Count == 0
             ? result.WithError($"Invoice items list is empty for client {clientId}.")
-            : result.WithValue(invoice);
+            : result.WithData(invoice);
     }
 
     private static Invoice CreateInvoice(string clientId, DateOnly date)

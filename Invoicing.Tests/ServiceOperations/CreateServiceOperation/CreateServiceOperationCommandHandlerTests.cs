@@ -121,7 +121,7 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
         if (isValid)
         {
             result.StatusCode.ShouldBe(StatusCodes.Status201Created);
-            result.Value.ShouldNotBeNull();
+            result.Data.ShouldNotBeNull();
             result.IsSuccess.ShouldBeTrue();
         }
         else
@@ -168,7 +168,7 @@ public class CreateServiceOperationCommandHandlerTests : BaseTest
 
         // Assert
         result.StatusCode.ShouldBe(StatusCodes.Status201Created);
-        result.Value.ShouldNotBeNull();
+        result.Data.ShouldNotBeNull();
         result.IsSuccess.ShouldBeTrue();
         Context.ServiceOperations.Count().ShouldBe(2);
     }

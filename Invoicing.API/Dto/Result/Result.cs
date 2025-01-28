@@ -3,14 +3,14 @@
 public abstract class Result<TResult, TValue> where TResult : Result<TResult, TValue>
 {
     public string? ErrorMessage { get; private set; }
-    public TValue? Value { get; private set; }
+    public TValue? Data { get; private set; }
 
     public bool IsError { get; private set; }
     public bool IsSuccess => !IsError;
 
-    public TResult WithValue(TValue value)
+    public TResult WithData(TValue data)
     {
-        Value = value;
+        Data = data;
         return (TResult)this;
     }
 

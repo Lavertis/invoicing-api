@@ -9,7 +9,7 @@ public static class ResultExtensions
         return result.StatusCode switch
         {
             204 => Results.StatusCode(result.StatusCode),
-            >= 200 and < 300 => Results.Json(result.Value, statusCode: result.StatusCode),
+            >= 200 and < 300 => Results.Json(result.Data, statusCode: result.StatusCode),
             _ => HandleErrorResponse(result)
         };
     }

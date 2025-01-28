@@ -60,9 +60,9 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.StatusCode.ShouldBe(StatusCodes.Status200OK);
-        result.Value.ShouldNotBeNull();
-        result.Value.SuccessfulInvoices.Count.ShouldBe(1);
-        result.Value.FailedInvoices.ShouldBeEmpty();
+        result.Data.ShouldNotBeNull();
+        result.Data.SuccessfulInvoices.Count.ShouldBe(1);
+        result.Data.FailedInvoices.ShouldBeEmpty();
 
         var invoiceCount = await Context.Invoices.CountAsync(CancellationToken.None);
         invoiceCount.ShouldBe(1);
@@ -113,9 +113,9 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.StatusCode.ShouldBe(StatusCodes.Status200OK);
-        result.Value.ShouldNotBeNull();
-        result.Value.SuccessfulInvoices.ShouldBeEmpty();
-        result.Value.FailedInvoices.Count.ShouldBe(1);
+        result.Data.ShouldNotBeNull();
+        result.Data.SuccessfulInvoices.ShouldBeEmpty();
+        result.Data.FailedInvoices.Count.ShouldBe(1);
         Context.Invoices.ShouldBeEmpty();
     }
 
@@ -151,9 +151,9 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.StatusCode.ShouldBe(StatusCodes.Status200OK);
-        result.Value.ShouldNotBeNull();
-        result.Value.SuccessfulInvoices.ShouldBeEmpty();
-        result.Value.FailedInvoices.Count.ShouldBe(1);
+        result.Data.ShouldNotBeNull();
+        result.Data.SuccessfulInvoices.ShouldBeEmpty();
+        result.Data.FailedInvoices.Count.ShouldBe(1);
         (await Context.Invoices.CountAsync(CancellationToken.None)).ShouldBe(1);
     }
 
@@ -221,9 +221,9 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.StatusCode.ShouldBe(StatusCodes.Status200OK);
-        result.Value.ShouldNotBeNull();
-        result.Value.SuccessfulInvoices.Count.ShouldBe(2);
-        result.Value.FailedInvoices.ShouldBeEmpty();
+        result.Data.ShouldNotBeNull();
+        result.Data.SuccessfulInvoices.Count.ShouldBe(2);
+        result.Data.FailedInvoices.ShouldBeEmpty();
 
         var invoices = await Context.Invoices.Include(i => i.Items).ToListAsync(CancellationToken.None);
         invoices.Count.ShouldBe(2);
@@ -296,9 +296,9 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.StatusCode.ShouldBe(StatusCodes.Status200OK);
-        result.Value.ShouldNotBeNull();
-        result.Value.SuccessfulInvoices.ShouldBeEmpty();
-        result.Value.FailedInvoices.ShouldBeEmpty();
+        result.Data.ShouldNotBeNull();
+        result.Data.SuccessfulInvoices.ShouldBeEmpty();
+        result.Data.FailedInvoices.ShouldBeEmpty();
         (await Context.Invoices.CountAsync(CancellationToken.None)).ShouldBe(1);
     }
 }

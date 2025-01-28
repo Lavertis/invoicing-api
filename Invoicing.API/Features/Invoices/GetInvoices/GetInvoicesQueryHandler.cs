@@ -24,7 +24,7 @@ public sealed class GetInvoicesQueryHandler(ApplicationDbContext context)
 
         query = ApplyFiltering(request, query);
         var response = await CreateResponse(request, query, cancellationToken);
-        return result.WithValue(response);
+        return result.WithData(response);
     }
 
     private async Task<PaginatedResponse<InvoiceResponse>> CreateResponse(
