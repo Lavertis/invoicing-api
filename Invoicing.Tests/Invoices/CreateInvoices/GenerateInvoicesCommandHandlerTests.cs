@@ -256,4 +256,49 @@ public class GenerateInvoicesCommandHandlerTests : BaseTest
         firstItem2.EndDate.ShouldBe(operations2[1].Date);
         firstItem2.Value.ShouldBe(120);
     }
+
+    [Fact]
+    public async Task DoesNotCreateInvoice_WhenInvoiceExistsAndAllOperationsAreInvoiced()
+    {
+        // Arrange
+        var command = new GenerateInvoicesCommand { Month = 1, Year = 2025 };
+
+        // Seed data
+        const string clientId = "client1";
+        var serviceProvision = new ServiceProvision
+            { ClientId = clientId, ServiceId = "service1", PricePerDay = 10, Quantity = 1 };
+        var operations = new List<ServiceOperation>
+        {
+            new()
+            {
+                ServiceProvision = serviceProvision, Date = new DateOnly(2025, 1, 1), Type = ServiceOperationType.Start
+            },
+            new()
+            {
+                ServiceProvision = serviceProvision, Date = new DateOnly(2025, 1, 31), Type = ServiceOperationType.End
+            }
+        };
+        Context.ServiceOperations.AddRange(operations);
+        var invoice = new Invoice { ClientId = clientId, Month = 1, Year = 2025 };
+        invoice.Items.Add(new InvoiceItem
+        {
+            ServiceId = serviceProvision.ServiceId,
+            StartDate = operations[0].Date,
+            EndDate = operations[1].Date,
+            Value = 300
+        });
+        Context.Invoices.Add(invoice);
+        await Context.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        result.Value.ShouldNotBeNull();
+        result.Value.SuccessfulInvoices.ShouldBeEmpty();
+        result.Value.FailedInvoices.ShouldBeEmpty();
+        (await Context.Invoices.CountAsync(CancellationToken.None)).ShouldBe(1);
+    }
 }

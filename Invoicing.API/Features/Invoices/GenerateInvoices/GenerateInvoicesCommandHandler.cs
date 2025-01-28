@@ -28,10 +28,8 @@ public sealed class GenerateInvoicesCommandHandler(ApplicationDbContext context)
             {
                 var areAllOperationsInvoicedResult = VerifyAllOperationsAreInvoiced(existingInvoice, clientOperations);
                 if (areAllOperationsInvoicedResult is { Value: false, IsError: true })
-                {
                     LogFailedInvoice(clientId, areAllOperationsInvoicedResult.ErrorMessage);
-                    continue;
-                }
+                continue;
             }
 
             var createInvoiceResult = CreateInvoiceForClient(clientOperations);
